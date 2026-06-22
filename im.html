@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Present Tense — Internal Medicine H&amp;P Trainer</title>
+  <meta name="description" content="Free internal medicine H&P presentation trainer for medical students and residents. Practice realistic admission cases and get instant rubric-based feedback. No login, no data collected."/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #080a0f; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f8fafc; }
+
+    /* ── HEADER ── */
+    .header {
+      background: #0d1117; border-bottom: 1px solid #1e2330; padding: 16px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px; position: sticky; top: 0; z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .header-title { font-size: 17px; font-weight: 900; letter-spacing: 0.5px; color: #f8fafc; }
+    .header-sub { font-size: 12px; color: #475569; margin-top: 2px; }
+    .header-right { font-size: 11px; color: #475569; }
+
+    .btn { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700;
+      padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; transition: background 0.15s; }
+    .btn-primary { background: #ef4444; color: #fff; }
+    .btn-primary:hover { background: #dc2626; }
+    .btn-primary:disabled { background: #1e2330; color: #475569; cursor: not-allowed; }
+    .btn-ghost { background: #131824; color: #94a3b8; border: 1px solid #1e2330; }
+    .btn-ghost:hover { background: #1e2330; color: #f8fafc; }
+
+    /* ── FORMAT CHOOSER (IM landing) ── */
+    .im-landing { position: fixed; inset: 0; z-index: 1000; overflow-y: auto; padding: 52px 20px;
+      background: radial-gradient(1100px 560px at 50% -12%, #11192b 0%, #080a0f 62%);
+      display: flex; flex-direction: column; align-items: center; }
+    .im-landing.hidden { display: none; }
+    .im-inner { width: 100%; max-width: 720px; margin: auto; }
+    .im-back { display: inline-flex; }
+    .im-logo { font-size: 36px; font-weight: 900; letter-spacing: -1px; color: #f8fafc; text-align: center; margin-top: 26px; }
+    .im-logo span { color: #ef4444; }
+    .im-spec { text-align: center; font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #60a5fa; margin-top: 14px; }
+    .im-sub { text-align: center; color: #94a3b8; font-size: 14px; margin-top: 8px; margin-bottom: 30px; }
+    .im-note { font-size: 12px; line-height: 1.7; color: #94a3b8; background: rgba(239,68,68,0.06);
+      border: 1px solid rgba(239,68,68,0.22); border-radius: 12px; padding: 14px 18px; margin-bottom: 30px; }
+    .im-note strong { color: #f8fafc; }
+    .fmt-label { font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #475569; margin-bottom: 14px; text-align: center; }
+    .fmt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .fmt-card { background: #0d1117; border: 1px solid #1e2330; border-radius: 14px; padding: 24px 20px 20px; text-align: center; position: relative; transition: border-color 0.15s, transform 0.1s; }
+    .fmt-card.active { cursor: pointer; }
+    .fmt-card.active:hover { border-color: #3b82f6; transform: translateY(-2px); }
+    .fmt-card.soon { opacity: 0.5; }
+    .fmt-emoji { font-size: 30px; margin-bottom: 12px; }
+    .fmt-name { font-size: 15px; font-weight: 800; color: #f8fafc; margin-bottom: 5px; }
+    .fmt-desc { font-size: 11px; color: #475569; line-height: 1.5; min-height: 32px; }
+    .fmt-badge { display: inline-block; margin-top: 12px; font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; padding: 4px 11px; border-radius: 100px; }
+    .badge-available { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .badge-soon { background: rgba(148,163,184,0.12); color: #94a3b8; }
+    .im-foot { text-align: center; font-size: 11px; color: #334155; margin-top: 28px; }
+    @media (max-width: 640px) { .fmt-grid { grid-template-columns: 1fr; } }
+
+    /* ── MAIN APP ── */
+    .main { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 66px); }
+    .main.select-mode { grid-template-columns: 1fr; }
+    .main.select-mode .input-panel { display: none; }
+    .main.select-mode .case-panel { max-width: 1040px; margin: 0 auto; width: 100%; }
+
+    .case-panel { border-right: 1px solid #1e2330; padding: 28px 32px; overflow-y: auto; }
+    .select-title { font-size: 20px; font-weight: 900; color: #f8fafc; margin-bottom: 4px; }
+    .select-sub { font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 22px; max-width: 720px; }
+    .case-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .case-card { background: #0d1117; border: 1px solid #1e2330; border-radius: 12px; padding: 18px 16px; cursor: pointer; transition: border-color 0.15s, transform 0.1s; }
+    .case-card:hover { border-color: #2d3348; transform: translateY(-2px); }
+    .case-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .case-emoji { font-size: 22px; }
+    .case-cat { font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #475569; margin-bottom: 2px; }
+    .case-card-title { font-size: 13px; font-weight: 800; color: #f8fafc; line-height: 1.3; }
+    .case-card-hook { font-size: 11px; color: #475569; line-height: 1.5; margin: 10px 0 12px; }
+    .diff-pill { display: inline-block; border-radius: 6px; padding: 3px 9px; font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+    .diff-easy { background: rgba(34,197,94,0.12); color: #4ade80; }
+    .diff-moderate { background: rgba(245,158,11,0.12); color: #fbbf24; }
+    .diff-hard { background: rgba(239,68,68,0.12); color: #f87171; }
+
+    .back-btn { background: none; border: none; color: #60a5fa; cursor: pointer; margin-bottom: 18px; font-size: 12px; font-weight: 700; }
+    .case-detail-view { display: none; }
+    .case-detail-view.visible { display: block; }
+    .case-select-view.hidden { display: none; }
+
+    .cd-title { font-size: 18px; font-weight: 900; color: #f8fafc; margin-bottom: 8px; }
+    .cd-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .cd-chip { background: #131824; border: 1px solid #1e2330; border-radius: 6px; padding: 4px 10px; font-size: 11px; color: #94a3b8; }
+    .sec { background: #0d1117; border: 1px solid #1e2330; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .sec-label { font-size: 9px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #ef4444; margin-bottom: 8px; }
+    .sec-body { font-size: 13px; line-height: 1.65; color: #cbd5e1; }
+    .kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kv { background: #131824; border-radius: 8px; padding: 8px 10px; }
+    .kv-k { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #475569; margin-bottom: 2px; }
+    .kv-v { font-size: 12px; color: #e2e8f0; }
+    .pill-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pill { background: #131824; border: 1px solid #1e2330; border-radius: 100px; padding: 3px 11px; font-size: 11px; color: #cbd5e1; }
+
+    /* ── WORKSPACE ── */
+    .input-panel { background: #080a0f; overflow-y: auto; padding: 0; }
+    .presentation-area { display: flex; flex-direction: column; padding: 24px 28px; gap: 14px; }
+    .area-label { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #475569; margin-bottom: 8px; }
+    .presentation-input { width: 100%; min-height: 320px; resize: vertical; background: #0d1117; border: 1px solid #1e2330; border-radius: 10px; padding: 16px; color: #e2e8f0; font-size: 14px; line-height: 1.65; font-family: inherit; }
+    .presentation-input:focus { outline: none; border-color: #2d3348; }
+    .input-footer { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .word-count { font-size: 12px; color: #94a3b8; }
+    .wc-num { color: #f8fafc; font-weight: 800; }
+    .wc-hint { font-size: 11px; color: #475569; margin-top: 2px; }
+    .try-again-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-mic { display: inline-flex; align-items: center; gap: 8px; background: #131824; border: 1px solid #1e2330; color: #94a3b8; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+    .btn-mic.recording { border-color: rgba(239,68,68,0.5); color: #f87171; }
+    .mic-dot { width: 8px; height: 8px; border-radius: 50%; background: #475569; }
+    .btn-mic.recording .mic-dot { background: #ef4444; animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .mic-status { font-size: 11px; color: #475569; min-height: 14px; }
+    .rubric-line { font-size: 11px; color: #475569; line-height: 1.7; border-top: 1px solid #1e2330; padding-top: 12px; }
+    .rubric-line b { color: #94a3b8; }
+
+    /* ── ATTENDING Q ── */
+    .attending-panel, .results-panel { display: none; padding: 24px 28px; }
+    .attending-panel.visible, .results-panel.visible { display: block; }
+    .aq-header { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 18px; }
+    .aq-header-icon { font-size: 26px; }
+    .aq-header h3 { font-size: 16px; color: #f8fafc; }
+    .aq-header p { font-size: 12px; color: #475569; margin-top: 3px; line-height: 1.5; }
+    .aq-card { background: #0d1117; border: 1px solid #1e2330; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .aq-num { font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #60a5fa; margin-bottom: 8px; }
+    .aq-question { font-size: 14px; color: #e2e8f0; margin-bottom: 10px; line-height: 1.5; }
+    .aq-textarea { width: 100%; min-height: 70px; background: #131824; border: 1px solid #1e2330; border-radius: 8px; padding: 10px 12px; color: #e2e8f0; font-size: 13px; font-family: inherit; resize: vertical; }
+    .aq-textarea:focus { outline: none; border-color: #2d3348; }
+
+    /* ── RESULTS ── */
+    .grade-circle { width: 68px; height: 68px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .grade-A { background: rgba(34,197,94,0.15); border: 2px solid #22c55e; color: #4ade80; }
+    .grade-B { background: rgba(59,130,246,0.15); border: 2px solid #3b82f6; color: #60a5fa; }
+    .grade-C { background: rgba(245,158,11,0.15); border: 2px solid #f59e0b; color: #fbbf24; }
+    .grade-D, .grade-F { background: rgba(239,68,68,0.15); border: 2px solid #ef4444; color: #f87171; }
+    .grade-letter { font-size: 22px; font-weight: 900; line-height: 1; }
+    .grade-pct { font-size: 10px; opacity: 0.8; }
+    .results-head { display: flex; gap: 16px; align-items: center; margin-bottom: 8px; }
+    .grade-summary { font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 20px; }
+    .score-bars-title, .fc-title { font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #475569; margin: 18px 0 12px; }
+    .score-bar-row { display: grid; grid-template-columns: 120px 1fr 48px; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .score-bar-label { font-size: 11px; color: #94a3b8; }
+    .score-bar-track { height: 8px; background: #131824; border-radius: 4px; overflow: hidden; }
+    .score-bar-fill { height: 100%; border-radius: 4px; }
+    .score-bar-val { font-size: 11px; font-weight: 700; text-align: right; }
+    .fc-card { background: #0d1117; border: 1px solid #1e2330; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; display: none; }
+    .fc-item { display: flex; gap: 9px; align-items: flex-start; margin-bottom: 7px; }
+    .fc-item:last-child { margin-bottom: 0; }
+    .fc-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+    .fc-dot.green { background: #22c55e; } .fc-dot.amber { background: #f59e0b; } .fc-dot.red { background: #ef4444; }
+    .fc-text { font-size: 12.5px; color: #cbd5e1; line-height: 1.5; }
+    .coaching { background: rgba(59,130,246,0.07); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+    .coaching .fc-title { color: #60a5fa; margin-top: 0; }
+    .model-toggle { background: #0d1117; border: 1px solid #1e2330; border-radius: 10px; padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; color: #94a3b8; }
+    .model-body { display: none; background: #0d1117; border: 1px solid #1e2330; border-top: none; border-radius: 0 0 10px 10px; padding: 16px; font-size: 13px; line-height: 1.7; color: #cbd5e1; white-space: pre-wrap; }
+    .model-body.visible { display: block; }
+    .results-actions { display: flex; gap: 10px; margin: 18px 0; flex-wrap: wrap; }
+
+    .footer { text-align: center; font-size: 11px; color: #334155; padding: 22px; border-top: 1px solid #1e2330; }
+
+    @media (max-width: 900px) {
+      .main { grid-template-columns: 1fr; }
+      .case-panel { border-right: none; border-bottom: 1px solid #1e2330; }
+      .case-grid, .main.select-mode .case-grid { grid-template-columns: 1fr; }
+    }
+    @media (min-width: 901px) and (max-width: 1200px) { .case-grid { grid-template-columns: 1fr 1fr; } }
+
+    /* ── ALPHA BADGE ── */
+    .alpha-badge {
+      position: fixed; bottom: 14px; right: 14px; z-index: 1100;
+      background: rgba(245,158,11,0.15); color: #fbbf24;
+      border: 1px solid rgba(245,158,11,0.4);
+      font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+      padding: 5px 12px; border-radius: 100px; pointer-events: none;
+      backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── IM FORMAT CHOOSER ── -->
+<div class="im-landing" id="im-landing">
+  <div class="im-inner">
+    <a href="index.html" class="btn btn-ghost im-back">← All Tracks</a>
+    <div class="im-logo">Present <span>Tense</span></div>
+    <div class="im-spec">Internal Medicine</div>
+    <div class="im-sub">Choose a presentation format to practice</div>
+
+    <div class="im-note">
+      <strong>Educational use only — not medical advice.</strong> All cases are fictional. Note that the expected structure and emphasis of an H&amp;P or progress note presentation vary by institution, service, and attending — use your program's standards as the source of truth.<br><br>
+      <strong>🧪 In alpha testing.</strong> Cases, scoring, and feedback are still being actively refined and may contain errors — verify anything important against authoritative sources.
+    </div>
+
+    <div class="fmt-label">Presentation Format</div>
+    <div class="fmt-grid">
+      <div class="fmt-card active" onclick="startFormat('hnp')">
+        <div class="fmt-emoji">📋</div>
+        <div class="fmt-name">H&amp;P Presentation</div>
+        <div class="fmt-desc">Practice presenting a full admission H&amp;P on rounds — summary statement through assessment &amp; plan</div>
+        <div class="fmt-badge badge-available">Available Now</div>
+      </div>
+      <div class="fmt-card soon">
+        <div class="fmt-emoji">🗒️</div>
+        <div class="fmt-name">Progress Note Presentation</div>
+        <div class="fmt-desc">Practice presenting a daily SOAP update on rounds for an admitted patient</div>
+        <div class="fmt-badge badge-soon">Coming Soon</div>
+      </div>
+    </div>
+
+    <div class="im-foot">By continuing you acknowledge this tool is for educational use only.</div>
+  </div>
+</div>
+
+<!-- ── HEADER ── -->
+<div class="header">
+  <div class="header-left">
+    <button class="btn btn-ghost" onclick="backToFormats()" style="gap:6px;">← Formats</button>
+    <div>
+      <div class="header-title">Present <span style="color:#ef4444;">Tense</span> · IM H&amp;P</div>
+      <div class="header-sub">Internal medicine admission cases · Present, then get instant feedback</div>
+    </div>
+  </div>
+  <div class="header-right">No login · Everything runs in your browser</div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main select-mode" id="main">
+  <div class="case-panel" id="case-panel">
+
+    <div class="case-select-view" id="case-select-view">
+      <div class="select-title">Choose an Admission</div>
+      <div class="select-sub">Each case gives you the chart — HPI, review of systems, past history, exam, and data. Build and deliver your full H&amp;P: open with a summary statement, walk the history and exam, present the data, then commit to an assessment with a problem-based plan.</div>
+      <div class="case-grid" id="case-grid"></div>
+    </div>
+
+    <div class="case-detail-view" id="case-detail-view">
+      <button class="back-btn" onclick="goBack()">← Back to cases</button>
+      <div id="case-detail-content"></div>
+    </div>
+  </div>
+
+  <div class="input-panel" id="input-panel">
+
+    <!-- INPUT -->
+    <div class="presentation-area" id="presentation-area">
+      <div>
+        <div class="area-label">Your H&amp;P Presentation</div>
+        <textarea class="presentation-input" id="presentation-input"
+          placeholder="Open with your summary statement: 'This is a [age]-year-old [sex] with a history of [pertinent PMH] presenting with [chief complaint]...'
+
+Then walk through the HPI, a focused review of systems, pertinent past medical history / medications / allergies, family and social history, the physical exam, and the data — then commit to an assessment with your leading diagnosis and reasoning, and close with a problem-based plan.
+
+Aim for 3–5 minutes (350–650 words)."
+          oninput="updateWordCount()"></textarea>
+      </div>
+      <div class="input-footer">
+        <div>
+          <div class="word-count">Words: <span class="wc-num" id="word-count">0</span> &nbsp;·&nbsp; Est. time: <span id="time-est">0:00</span></div>
+          <div class="wc-hint" id="wc-hint">Aim for 350–650 words (3–5 min)</div>
+        </div>
+        <div class="try-again-row">
+          <button class="btn-mic" id="mic-btn" onclick="toggleDictation()"><div class="mic-dot"></div><span id="mic-label">Dictate</span></button>
+          <button class="btn btn-ghost" onclick="clearPresentation()">Clear</button>
+          <button class="btn btn-primary" id="submit-btn" onclick="submitPresentation()" disabled>Score H&amp;P</button>
+        </div>
+      </div>
+      <div class="mic-status" id="mic-status"></div>
+      <div class="rubric-line" id="rubric-line"></div>
+    </div>
+
+    <!-- ATTENDING Q -->
+    <div class="attending-panel" id="attending-panel">
+      <div class="aq-header">
+        <div class="aq-header-icon">🩺</div>
+        <div class="aq-header-text">
+          <h3>Your Attending Has a Question</h3>
+          <p>Answer before seeing your feedback — these probe your clinical reasoning.</p>
+        </div>
+      </div>
+      <div id="aq-questions-container"></div>
+      <button class="btn btn-primary" onclick="submitAttendingAnswers()" style="margin-top:6px;">See My Feedback</button>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results-panel" id="results-panel">
+      <div class="results-head" id="results-header"></div>
+      <div class="grade-summary" id="grade-summary"></div>
+      <div class="score-bars-title">Rubric Breakdown</div>
+      <div id="score-bars"></div>
+      <div class="fc-card" id="strengths-card"><div class="fc-title" style="color:#4ade80;">Strengths</div><div id="strengths-list"></div></div>
+      <div class="fc-card" id="improvements-card"><div class="fc-title" style="color:#fbbf24;">To Improve</div><div id="improvements-list"></div></div>
+      <div class="fc-card" id="critical-card"><div class="fc-title" style="color:#f87171;">Critical Misses</div><div id="critical-list"></div></div>
+      <div class="coaching" id="coaching-card" style="display:none;"><div class="fc-title">Coaching Tip</div><div class="fc-text" id="coaching-text"></div></div>
+      <div id="aq-results-section" style="display:none;"></div>
+      <div class="results-actions">
+        <button class="btn btn-primary" onclick="tryAgain()">Try This Case Again</button>
+        <button class="btn btn-ghost" onclick="goBack()">Pick a New Case</button>
+      </div>
+      <div class="model-toggle" onclick="toggleModel()"><span>📝 Show model H&amp;P presentation</span><span id="model-icon">▼</span></div>
+      <div class="model-body" id="model-body"></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer"><strong style="color:#475569;">Present Tense</strong> · <span style="color:#fbbf24;">Alpha testing — cases &amp; scoring still being refined.</span> For educational use only — not medical advice. All cases are fictional and contain no patient data.</div>
+
+<div class="alpha-badge" title="These trainers are in alpha testing — content and scoring are still being refined.">🧪 Alpha · In Testing</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   INTERNAL MEDICINE H&P CASES
+   ════════════════════════════════════════════════════════════════ */
+const CASES = [
+  {
+    id: 1, emoji: '🫀', cat: 'Cardiology', difficulty: 'moderate',
+    title: 'Progressive dyspnea & leg swelling',
+    demographics: '68 y/o male', hook: 'HR 98 · BP 158/92 · RR 22 · SpO₂ 89% RA',
+    admit: { cc: '5 days of progressive dyspnea and bilateral leg swelling', vitals: 'T 37.0 · HR 98 · BP 158/92 · RR 22 · SpO₂ 89% on room air' },
+    hpi: 'A 68-year-old man with HTN, type 2 diabetes, and ischemic cardiomyopathy (EF 35%) presents with 5 days of progressive exertional dyspnea, three-pillow orthopnea, and paroxysmal nocturnal dyspnea. He reports an 8-pound weight gain and worsening bilateral leg swelling. He admits to missing several doses of his furosemide over the past week and a recent diet high in salty restaurant food. He denies chest pain, fevers, cough, or palpitations.',
+    ros: 'Positive for fatigue, dyspnea, orthopnea, and lower-extremity edema. Negative for chest pain, fever, chills, cough, hemoptysis, palpitations, syncope, and abdominal pain.',
+    pmh: ['Hypertension', 'Type 2 diabetes mellitus', 'CAD s/p MI with PCI (2019)', 'HFrEF, EF 35%'],
+    meds: ['Lisinopril', 'Metoprolol succinate', 'Furosemide (admits missed doses)', 'Atorvastatin', 'Metformin', 'Aspirin'],
+    allergies: 'NKDA',
+    family: 'Father with MI at 60', social: 'Former smoker, 30 pack-years, quit 2019. No alcohol. Lives with wife.',
+    exam: { General: 'Mild respiratory distress, speaking in short sentences', HEENT: 'JVD elevated to ~12 cm', Cardiac: 'Regular rate, S3 gallop, no murmurs', Pulmonary: 'Bibasilar crackles to mid-lung fields', Abdomen: 'Soft, mild tender hepatomegaly', Extremities: '2+ pitting edema to knees bilaterally', Skin: 'Cool, no cyanosis' },
+    data: [
+      { k: 'BNP', v: '1,850 pg/mL' }, { k: 'Troponin', v: 'Mildly elevated, flat trend' },
+      { k: 'Creatinine', v: '1.4 (baseline 1.1)' }, { k: 'Sodium', v: '134' },
+      { k: 'CXR', v: 'Pulmonary edema, cardiomegaly' }, { k: 'EKG', v: 'Old inferior Q waves, no acute ST changes' },
+    ],
+    model: 'This is a 68-year-old man with hypertension, type 2 diabetes, and ischemic cardiomyopathy with an EF of 35% who presents with five days of progressive exertional dyspnea, three-pillow orthopnea, paroxysmal nocturnal dyspnea, and an eight-pound weight gain with worsening bilateral leg swelling, in the setting of missed furosemide doses and dietary sodium. On review of systems he endorses fatigue and edema and denies chest pain, fever, or cough. His past history is notable for a prior MI with PCI in 2019 and known HFrEF; his medications include lisinopril, metoprolol, and furosemide, and he has no known drug allergies. He is a former smoker who lives with his wife. On exam his oxygen saturation is 89% on room air; he has JVD to 12 centimeters, an S3 gallop, bibasilar crackles, and 2+ pitting edema to the knees. His labs are notable for a BNP of 1,850, a creatinine bumped to 1.4 from a baseline of 1.1, and a sodium of 134; chest x-ray shows pulmonary edema and cardiomegaly, and his EKG shows no acute ischemic changes. In summary, this is an acute decompensated heart failure exacerbation of his known HFrEF, most likely precipitated by medication nonadherence and dietary sodium. For his heart failure, my plan is IV diuresis with furosemide with daily weights and strict ins and outs, sodium and fluid restriction, continuation of guideline-directed medical therapy, and telemetry; I would also get a repeat echocardiogram and provide heart-failure education. For his diabetes I would manage with a sliding scale, and I will monitor his renal function closely with diuresis.',
+    scoring: {
+      summary: { age: ['68'], sex: ['man', 'male', 'gentleman'], pmh: ['hfref', 'ejection fraction', 'cardiomyopathy', 'ef of 35', 'ef 35', 'heart failure'], cc: ['dyspnea', 'shortness of breath', 'short of breath'] },
+      hpi: { onset: ['five days', '5 days', 'progressive'], orthopnea: ['orthopnea', 'pillow'], pnd: ['paroxysmal nocturnal', 'pnd'], weight: ['weight gain', 'eight-pound', '8-pound', '8 pound', '8 lb'], precip: ['missed', 'nonadherence', 'adherence', 'dietary', 'salt', 'sodium'], negatives: ['no chest pain', 'denies chest pain', 'no fever', 'denies fever'] },
+      ros: { positive: ['fatigue', 'edema', 'orthopnea'], negative: ['denies', 'no cough', 'no palpitations', 'no chest pain'] },
+      pmh: { conditions: ['hypertension', 'diabetes', 'prior mi', 'cad', 'coronary'], meds: ['lisinopril', 'metoprolol', 'furosemide', 'lasix', 'atorvastatin', 'metformin'], allergies: ['nkda', 'no known', 'allergies'] },
+      psocial: { social: ['smoker', 'tobacco', 'lives with', 'alcohol'], family: ['father', 'family history'] },
+      exam: { vitals: ['89', 'oxygen', 'spo2', 'saturation'], jvd: ['jvd', 'jugular', 'neck vein'], cardiac: ['s3', 'gallop'], pulm: ['crackles', 'rales', 'bibasilar'], edema: ['pitting', 'edema'] },
+      data: { bnp: ['bnp'], renal: ['creatinine', '1.4'], cxr: ['chest x-ray', 'cxr', 'pulmonary edema', 'cardiomegaly'], ekg: ['ekg', 'ecg', 'no acute', 'no ischemic'] },
+      assessment: { leading: ['decompensated heart failure', 'adhf', 'heart failure exacerbation', 'chf exacerbation', 'volume overload'], reasoning: ['precipitated', 'nonadherence', 'dietary', 'missed', 'sodium'] },
+      plan: { diuresis: ['diuresis', 'furosemide', 'lasix', 'diurese', 'iv diuretic'], monitor: ['daily weight', 'ins and outs', 'i/o', 'telemetry', 'strict'], restriction: ['sodium restriction', 'fluid restriction', 'salt restriction', 'fluid restrict'], gdmt: ['guideline-directed', 'gdmt', 'continue', 'beta blocker', 'ace'] },
+      critical: ['heart failure', 'furosemide'],
+      questions: [
+        { q: 'What are common precipitants of an acute heart failure exacerbation?', model: 'Medication or dietary nonadherence, acute ischemia, arrhythmia (e.g., new atrial fibrillation), uncontrolled hypertension, infection, worsening renal function, and NSAID use ("FAILURE" mnemonic).' },
+        { q: 'Would you continue or hold his beta-blocker during this admission?', model: 'In acute decompensation, avoid starting or up-titrating a beta-blocker. If he is already on it and is not in cardiogenic shock or significantly hypotensive, you can usually continue at the same or a reduced dose; hold or reduce it if he is hypoperfused, then resume guideline-directed dosing once euvolemic.' },
+      ],
+    },
+  },
+  {
+    id: 2, emoji: '🫁', cat: 'Pulmonary', difficulty: 'easy',
+    title: 'Worsening cough & breathlessness',
+    demographics: '64 y/o female', hook: 'HR 104 · BP 138/84 · RR 24 · SpO₂ 88% RA',
+    admit: { cc: '4 days of worsening cough, sputum, and dyspnea', vitals: 'T 37.4 · HR 104 · BP 138/84 · RR 24 · SpO₂ 88% on room air' },
+    hpi: 'A 64-year-old woman with COPD (FEV1 ~50%, on home tiotropium) presents with 4 days of increasing dyspnea, productive cough with a change from white to thick yellow-green sputum, and increased wheezing. She has used her albuterol inhaler far more than usual with limited relief. She reports a mild head cold the week prior. She denies fever, chest pain, hemoptysis, or leg swelling. She continues to smoke half a pack daily.',
+    ros: 'Positive for cough, sputum production, dyspnea, and wheezing. Negative for fever, chills, chest pain, hemoptysis, orthopnea, and lower-extremity edema.',
+    pmh: ['COPD (FEV1 ~50% predicted)', 'Hypertension', 'GERD'],
+    meds: ['Tiotropium inhaler', 'Albuterol inhaler PRN', 'Amlodipine', 'Omeprazole'],
+    allergies: 'Penicillin (rash)',
+    family: 'Noncontributory', social: 'Current smoker, 40 pack-years. Occasional alcohol. Lives alone.',
+    exam: { General: 'Tachypneic, using accessory muscles, pursed-lip breathing', HEENT: 'No JVD', Cardiac: 'Tachycardic, regular, no murmur', Pulmonary: 'Diffuse expiratory wheezing, prolonged expiratory phase, decreased air movement', Abdomen: 'Soft, nontender', Extremities: 'No edema, no calf tenderness', Skin: 'Warm' },
+    data: [
+      { k: 'CXR', v: 'Hyperinflation, no focal infiltrate' }, { k: 'WBC', v: '11.2' },
+      { k: 'VBG', v: 'pH 7.34, pCO₂ 52' }, { k: 'EKG', v: 'Sinus tachycardia' },
+      { k: 'Flu/COVID', v: 'Pending' }, { k: 'Lactate', v: '1.4' },
+    ],
+    model: 'This is a 64-year-old woman with COPD, with an FEV1 around 50% on home tiotropium, who presents with four days of worsening dyspnea, increased cough productive of thick yellow-green sputum, and increased wheezing, preceded by a mild upper respiratory infection. On review of systems she endorses cough, sputum, and wheezing and denies fever, chest pain, hemoptysis, orthopnea, or leg swelling. Her past history includes COPD, hypertension, and GERD; she takes tiotropium and albuterol, and she has a penicillin allergy that causes a rash. She is a current smoker with a 40 pack-year history and lives alone. On exam she is tachypneic with accessory muscle use and pursed-lip breathing, with an oxygen saturation of 88% on room air; her lungs have diffuse expiratory wheezing with a prolonged expiratory phase and decreased air movement, and she has no edema. Her chest x-ray shows hyperinflation without a focal infiltrate, her white count is mildly elevated at 11.2, and her venous blood gas shows a pH of 7.34 with a pCO2 of 52, consistent with mild hypercapnia. In summary, this is an acute COPD exacerbation, most likely triggered by a viral upper respiratory infection with a bacterial component given the purulent sputum. My plan is frequent bronchodilators with albuterol and ipratropium, systemic corticosteroids, and an antibiotic such as azithromycin or doxycycline given her penicillin allergy; I would provide controlled supplemental oxygen targeting a saturation of 88 to 92%, consider noninvasive ventilation if she tires or her hypercapnia worsens, and strongly counsel smoking cessation.',
+    scoring: {
+      summary: { age: ['64'], sex: ['woman', 'female', 'lady'], pmh: ['copd', 'chronic obstructive', 'fev1'], cc: ['dyspnea', 'shortness of breath', 'cough'] },
+      hpi: { onset: ['four days', '4 days', 'worsening'], sputum: ['sputum', 'yellow', 'green', 'purulent', 'phlegm'], trigger: ['upper respiratory', 'cold', 'viral', 'uri'], inhaler: ['albuterol', 'inhaler', 'rescue'], negatives: ['no fever', 'denies fever', 'no chest pain', 'no edema'] },
+      ros: { positive: ['cough', 'wheezing', 'sputum'], negative: ['denies', 'no fever', 'no hemoptysis', 'no edema'] },
+      pmh: { conditions: ['copd', 'hypertension', 'gerd'], meds: ['tiotropium', 'albuterol', 'amlodipine', 'omeprazole'], allergies: ['penicillin', 'allergy', 'rash'] },
+      psocial: { social: ['smoker', 'tobacco', 'pack-year', 'pack year', 'lives alone'], family: ['family', 'noncontributory'] },
+      exam: { vitals: ['88', 'oxygen', 'spo2', 'saturation', 'tachypneic'], work: ['accessory', 'pursed', 'distress'], pulm: ['wheezing', 'wheeze', 'expiratory', 'air movement'], edema: ['no edema', 'no calf'] },
+      data: { cxr: ['chest x-ray', 'cxr', 'hyperinflation', 'no infiltrate'], wbc: ['white count', 'wbc', '11.2'], gas: ['blood gas', 'vbg', 'abg', 'pco2', 'hypercapnia', '7.34'], infx: ['flu', 'covid', 'respiratory panel'] },
+      assessment: { leading: ['copd exacerbation', 'acute exacerbation of copd', 'aecopd', 'exacerbation'], reasoning: ['viral', 'upper respiratory', 'purulent', 'bacterial', 'trigger'] },
+      plan: { bronch: ['bronchodilator', 'albuterol', 'ipratropium', 'duoneb', 'nebulizer'], steroid: ['steroid', 'corticosteroid', 'prednisone', 'solumedrol', 'methylprednisolone'], abx: ['antibiotic', 'azithromycin', 'doxycycline', 'amoxicillin'], oxygen: ['oxygen', 'titrate', '88 to 92', 'noninvasive', 'bipap'], cessation: ['smoking cessation', 'quit', 'tobacco'] },
+      critical: ['copd', 'steroid'],
+      questions: [
+        { q: 'Why do we target an oxygen saturation of 88–92% rather than higher in COPD?', model: 'In patients with chronic hypercapnia, excessive oxygen can worsen CO2 retention through several mechanisms (reduced hypoxic vasoconstriction with V/Q mismatch, the Haldane effect, and some reduction in respiratory drive). Targeting 88–92% provides adequate oxygenation while minimizing the risk of worsening hypercapnia and respiratory acidosis.' },
+        { q: 'What are indications for noninvasive positive pressure ventilation (BiPAP) here?', model: 'Respiratory acidosis (pH < 7.35 with hypercapnia), worsening or persistent dyspnea with accessory muscle use and fatigue despite medical therapy. BiPAP reduces the work of breathing and the need for intubation in COPD exacerbations.' },
+      ],
+    },
+  },
+  {
+    id: 3, emoji: '🦠', cat: 'Infectious Disease', difficulty: 'easy',
+    title: 'Fever, cough & pleuritic pain',
+    demographics: '55 y/o male', hook: 'T 38.9 · HR 110 · BP 108/66 · RR 26 · SpO₂ 90% RA',
+    admit: { cc: '3 days of fever, productive cough, and right-sided chest pain', vitals: 'T 38.9 · HR 110 · BP 108/66 · RR 26 · SpO₂ 90% on room air' },
+    hpi: 'A 55-year-old man with type 2 diabetes presents with 3 days of fevers, rigors, productive cough with rusty sputum, and right-sided pleuritic chest pain worse with deep breathing. He reports malaise and decreased appetite. He denies recent travel, sick contacts, or hemoptysis. He has had no recent hospitalizations or antibiotics.',
+    ros: 'Positive for fever, chills, cough, sputum, pleuritic chest pain, and malaise. Negative for hemoptysis, leg swelling, abdominal pain, dysuria, and rash.',
+    pmh: ['Type 2 diabetes mellitus', 'Hyperlipidemia'],
+    meds: ['Metformin', 'Atorvastatin'],
+    allergies: 'NKDA',
+    family: 'Noncontributory', social: 'Never smoker. Social alcohol. Works as a teacher. Up to date on vaccines except no recent pneumococcal.',
+    exam: { General: 'Ill-appearing, flushed, diaphoretic', HEENT: 'Dry mucous membranes', Cardiac: 'Tachycardic, regular', Pulmonary: 'Decreased breath sounds and crackles at the right base, egophony', Abdomen: 'Soft, nontender', Extremities: 'No edema', Skin: 'Warm, no rash' },
+    data: [
+      { k: 'CXR', v: 'Right lower lobe consolidation' }, { k: 'WBC', v: '16.5 with left shift' },
+      { k: 'Lactate', v: '2.6' }, { k: 'Creatinine', v: '1.2' },
+      { k: 'Glucose', v: '244' }, { k: 'Blood cultures', v: 'Drawn, pending' },
+    ],
+    model: 'This is a 55-year-old man with type 2 diabetes who presents with three days of fevers, rigors, a productive cough with rusty sputum, and right-sided pleuritic chest pain, along with malaise and poor appetite. On review of systems he endorses fever, chills, cough, and pleuritic pain and denies hemoptysis, leg swelling, or dysuria. His past history is notable for diabetes and hyperlipidemia; he takes metformin and atorvastatin and has no known allergies. He is a never-smoker, works as a teacher, and has not had a recent pneumococcal vaccine. On exam he is ill-appearing and febrile to 38.9 with a heart rate of 110, a blood pressure of 108/66, and an oxygen saturation of 90% on room air; his lungs have decreased breath sounds, crackles, and egophony at the right base. His chest x-ray shows a right lower lobe consolidation, his white count is elevated at 16.5 with a left shift, his lactate is 2.6, and his glucose is 244. In summary, this is a community-acquired pneumonia with associated sepsis given his fever, tachycardia, and elevated lactate. My plan is to obtain blood cultures and a respiratory pathogen panel, start empiric antibiotics for community-acquired pneumonia such as ceftriaxone plus azithromycin, give IV fluids for his sepsis with lactate clearance monitoring, provide supplemental oxygen, and manage his hyperglycemia. I will calculate a severity score to guide the level of care and plan to give a pneumococcal vaccine before discharge.',
+    scoring: {
+      summary: { age: ['55'], sex: ['man', 'male', 'gentleman'], pmh: ['diabetes', 'diabetic'], cc: ['fever', 'cough', 'chest pain', 'pneumonia'] },
+      hpi: { onset: ['three days', '3 days'], cough: ['productive', 'rusty', 'sputum'], pleuritic: ['pleuritic', 'worse with', 'deep breath'], systemic: ['fever', 'rigors', 'chills', 'malaise'], negatives: ['no travel', 'denies travel', 'no hemoptysis', 'no sick contacts'] },
+      ros: { positive: ['fever', 'cough', 'chills', 'pleuritic'], negative: ['denies', 'no hemoptysis', 'no dysuria', 'no rash'] },
+      pmh: { conditions: ['diabetes', 'hyperlipidemia'], meds: ['metformin', 'atorvastatin'], allergies: ['nkda', 'no known', 'allergies'] },
+      psocial: { social: ['never smoker', 'nonsmoker', 'alcohol', 'teacher', 'vaccine'], family: ['family', 'noncontributory'] },
+      exam: { vitals: ['38.9', 'febrile', 'fever', '90', 'oxygen', 'saturation'], pulm: ['crackles', 'decreased breath', 'egophony', 'right base', 'consolidation'], appear: ['ill-appearing', 'ill appearing', 'diaphoretic', 'flushed'] },
+      data: { cxr: ['chest x-ray', 'cxr', 'consolidation', 'lower lobe', 'infiltrate'], wbc: ['white count', 'wbc', 'left shift', '16.5'], lactate: ['lactate', '2.6'], cultures: ['blood culture', 'cultures'] },
+      assessment: { leading: ['community-acquired pneumonia', 'community acquired pneumonia', 'cap', 'pneumonia'], reasoning: ['sepsis', 'lactate', 'tachycardia', 'fever', 'consolidation'] },
+      plan: { abx: ['antibiotic', 'ceftriaxone', 'azithromycin', 'empiric', 'cap coverage'], cultures: ['blood culture', 'cultures', 'respiratory panel'], fluids: ['iv fluid', 'fluids', 'resuscitation', 'lactate clearance'], oxygen: ['oxygen', 'supplemental'], severity: ['curb', 'psi', 'severity', 'level of care'] },
+      critical: ['pneumonia', 'antibiotic'],
+      questions: [
+        { q: 'What organisms would your empiric therapy need to cover for community-acquired pneumonia?', model: 'Typical organisms — Streptococcus pneumoniae (most common), Haemophilus influenzae, and Moraxella — plus atypicals such as Mycoplasma, Chlamydophila, and Legionella. Standard inpatient coverage is a beta-lactam (e.g., ceftriaxone) plus a macrolide, or respiratory fluoroquinolone monotherapy.' },
+        { q: 'How would you decide whether this patient needs the ICU?', model: 'Use a severity tool (CURB-65 or PSI) plus the IDSA/ATS minor/major criteria. Major criteria include septic shock needing vasopressors or respiratory failure needing mechanical ventilation; multiple minor criteria (RR ≥30, multilobar infiltrates, hypotension, confusion, hypoxemia) also warrant ICU-level care. His tachycardia, hypotension, and elevated lactate make me watch him closely.' },
+      ],
+    },
+  },
+  {
+    id: 4, emoji: '🩸', cat: 'Endocrine', difficulty: 'moderate',
+    title: 'Nausea, polyuria & confusion',
+    demographics: '24 y/o female', hook: 'HR 122 · BP 104/64 · RR 26 · SpO₂ 99% RA',
+    admit: { cc: 'A day of nausea, vomiting, abdominal pain, and lethargy', vitals: 'T 37.1 · HR 122 · BP 104/64 · RR 26 (deep) · SpO₂ 99% on room air' },
+    hpi: 'A 24-year-old woman with type 1 diabetes presents with 1 day of nausea, vomiting, and diffuse abdominal pain, on a background of several days of polyuria, polydipsia, and fatigue. She ran out of her insulin a week ago and has not been taking it. She reports a recent sore throat and low-grade illness. On arrival she is lethargic but arousable, with deep, rapid breathing.',
+    ros: 'Positive for nausea, vomiting, abdominal pain, polyuria, polydipsia, and fatigue. Negative for chest pain, dysuria, focal weakness, and diarrhea.',
+    pmh: ['Type 1 diabetes mellitus (since age 12)'],
+    meds: ['Insulin glargine and lispro (not taking — ran out)'],
+    allergies: 'NKDA',
+    family: 'Mother with hypothyroidism', social: 'College student. Occasional alcohol, no smoking. Lives in a dorm.',
+    exam: { General: 'Lethargic but arousable, ill-appearing', HEENT: 'Dry mucous membranes, fruity breath odor', Cardiac: 'Tachycardic, regular', Pulmonary: 'Deep, rapid (Kussmaul) respirations, clear lungs', Abdomen: 'Diffusely tender, no rebound or guarding', Extremities: 'Delayed capillary refill', Neuro: 'Sleepy, oriented to person and place' },
+    data: [
+      { k: 'Glucose', v: '512' }, { k: 'Anion gap', v: '24' },
+      { k: 'Bicarbonate', v: '9' }, { k: 'VBG pH', v: '7.18' },
+      { k: 'Beta-hydroxybutyrate', v: 'Elevated' }, { k: 'Potassium', v: '5.3 (total body depleted)' },
+    ],
+    model: 'This is a 24-year-old woman with type 1 diabetes who presents with one day of nausea, vomiting, and diffuse abdominal pain on a background of several days of polyuria, polydipsia, and fatigue, in the setting of running out of her insulin a week ago and a recent viral illness. On review of systems she endorses nausea, vomiting, abdominal pain, and polyuria and denies chest pain, dysuria, or focal weakness. Her only past medical history is type 1 diabetes since age 12, and her medications are glargine and lispro, which she has not been taking; she has no known allergies. She is a college student who lives in a dorm. On exam she is lethargic but arousable and ill-appearing, with a heart rate of 122 and a blood pressure of 104/64; she has dry mucous membranes, a fruity breath odor, and deep, rapid Kussmaul respirations, with diffuse abdominal tenderness and delayed capillary refill. Her labs show a glucose of 512, an anion gap of 24, a bicarbonate of 9, a venous pH of 7.18, and elevated beta-hydroxybutyrate, with a potassium of 5.3 that reflects total-body depletion. In summary, this is diabetic ketoacidosis precipitated by insulin nonadherence and an intercurrent illness. My plan is aggressive isotonic IV fluid resuscitation, an insulin infusion once potassium is confirmed above 3.3, careful potassium repletion, and hourly glucose with frequent electrolyte and gap monitoring; I will add dextrose to the fluids when the glucose falls below 200, search for the precipitant, and avoid stopping the insulin drip until the anion gap has closed and she overlaps with subcutaneous insulin.',
+    scoring: {
+      summary: { age: ['24'], sex: ['woman', 'female', 'lady'], pmh: ['type 1 diabetes', 'type one diabetes', 't1dm', 'diabetic'], cc: ['nausea', 'vomiting', 'abdominal pain', 'dka'] },
+      hpi: { onset: ['one day', '1 day', 'several days'], osmotic: ['polyuria', 'polydipsia', 'thirst'], precip: ['ran out', 'not taking', 'nonadherence', 'missed insulin', 'illness', 'sore throat'], gi: ['nausea', 'vomiting', 'abdominal pain'], breathing: ['deep', 'rapid', 'kussmaul'] },
+      ros: { positive: ['nausea', 'vomiting', 'polyuria', 'fatigue', 'abdominal pain'], negative: ['denies', 'no chest pain', 'no dysuria', 'no weakness'] },
+      pmh: { conditions: ['type 1 diabetes', 'type one diabetes', 't1dm'], meds: ['insulin', 'glargine', 'lispro'], allergies: ['nkda', 'no known', 'allergies'] },
+      psocial: { social: ['college', 'student', 'dorm', 'alcohol', 'smoking'], family: ['mother', 'hypothyroid', 'family'] },
+      exam: { vitals: ['122', 'tachycardic', 'blood pressure'], exam2: ['dry mucous', 'fruity', 'kussmaul', 'deep', 'rapid'], abd: ['tender', 'abdomen'], neuro: ['lethargic', 'arousable', 'oriented'] },
+      data: { glucose: ['glucose', '512'], gap: ['anion gap', 'gap of 24', 'elevated gap'], bicarb: ['bicarbonate', 'bicarb', 'low bicarb'], ph: ['ph', '7.18', 'acidosis'], ketones: ['ketone', 'beta-hydroxybutyrate', 'bhb'], potassium: ['potassium', '5.3'] },
+      assessment: { leading: ['diabetic ketoacidosis', 'dka'], reasoning: ['insulin nonadherence', 'ran out', 'illness', 'precipitant', 'anion gap', 'acidosis'] },
+      plan: { fluids: ['iv fluid', 'fluids', 'isotonic', 'normal saline', 'resuscitation'], insulin: ['insulin infusion', 'insulin drip', 'insulin gtt'], potassium: ['potassium', 'repletion', 'replace potassium', '3.3'], monitor: ['hourly glucose', 'monitor', 'anion gap', 'close the gap', 'dextrose'], precip: ['precipitant', 'trigger', 'source'] },
+      critical: ['ketoacidosis', 'insulin', 'potassium'],
+      questions: [
+        { q: 'Why must you check potassium before starting the insulin drip?', model: 'Insulin drives potassium intracellularly and can precipitate dangerous hypokalemia. Although the measured potassium may look normal or high, total-body potassium is depleted in DKA. If potassium is below 3.3, you hold insulin and replete potassium first; between 3.3 and 5.3 you give insulin and add potassium to fluids; above 5.3 you give insulin and recheck.' },
+        { q: 'What marks the resolution of DKA, and how do you transition off the insulin drip?', model: 'Resolution is defined by closure of the anion gap (and normalization of bicarbonate/pH), not simply a normal glucose. You overlap subcutaneous long-acting insulin with the infusion for 1–2 hours before stopping the drip to prevent rebound ketosis, and you add dextrose to fluids once glucose is below ~200 so you can continue the insulin until the gap closes.' },
+      ],
+    },
+  },
+  {
+    id: 5, emoji: '🩸', cat: 'Gastroenterology', difficulty: 'hard',
+    title: 'Black stools & lightheadedness',
+    demographics: '72 y/o male', hook: 'HR 112 · BP 96/58 · RR 18 · SpO₂ 97% RA',
+    admit: { cc: '2 days of black, tarry stools and lightheadedness', vitals: 'T 36.8 · HR 112 · BP 96/58 (orthostatic) · RR 18 · SpO₂ 97% on room air' },
+    hpi: 'A 72-year-old man with osteoarthritis, on daily naproxen, and atrial fibrillation on apixaban presents with 2 days of black, tarry, foul-smelling stools and progressive lightheadedness, with one episode of near-syncope on standing. He reports several weeks of intermittent epigastric burning. He denies hematemesis, bright red blood per rectum, abdominal pain today, or chest pain. He has taken more naproxen than usual recently for knee pain.',
+    ros: 'Positive for melena, lightheadedness, fatigue, and epigastric burning. Negative for hematemesis, hematochezia, fever, weight loss, and chest pain.',
+    pmh: ['Osteoarthritis', 'Atrial fibrillation', 'Hypertension'],
+    meds: ['Naproxen daily (increased recently)', 'Apixaban', 'Lisinopril'],
+    allergies: 'NKDA',
+    family: 'No GI malignancy', social: 'Former smoker. 2–3 alcoholic drinks daily. Lives with spouse.',
+    exam: { General: 'Pale, mildly diaphoretic', HEENT: 'Conjunctival pallor, dry mucous membranes', Cardiac: 'Tachycardic, irregularly irregular', Pulmonary: 'Clear', Abdomen: 'Soft, mild epigastric tenderness, no rebound; hyperactive bowel sounds', Rectal: 'Black tarry stool, guaiac positive', Extremities: 'Cool, delayed capillary refill' },
+    data: [
+      { k: 'Hemoglobin', v: '7.8 (baseline ~13)' }, { k: 'BUN/Cr', v: '42 / 1.3 (elevated ratio)' },
+      { k: 'Platelets', v: '210' }, { k: 'INR', v: '1.3' },
+      { k: 'Lactate', v: '2.1' }, { k: 'Type & screen', v: 'Sent' },
+    ],
+    model: 'This is a 72-year-old man with osteoarthritis on daily naproxen and atrial fibrillation on apixaban who presents with two days of black, tarry stools and progressive lightheadedness with near-syncope on standing, on a background of several weeks of epigastric burning and recent increased NSAID use. On review of systems he endorses melena, lightheadedness, and epigastric burning and denies hematemesis, hematochezia, fever, or weight loss. His past history includes atrial fibrillation and hypertension; his medications are notably naproxen and apixaban, and he has no known allergies. He is a former smoker who drinks two to three alcoholic beverages daily. On exam he is pale and diaphoretic with a heart rate of 112, a blood pressure of 96/58 with orthostasis, conjunctival pallor, an irregularly irregular rhythm, mild epigastric tenderness, and black, guaiac-positive stool on rectal exam. His labs show a hemoglobin of 7.8 down from a baseline of 13, an elevated BUN-to-creatinine ratio, an INR of 1.3, and a lactate of 2.1. In summary, this is an acute upper GI bleed, most likely a peptic ulcer related to NSAID use and anticoagulation, with hemodynamic compromise. My plan is two large-bore IVs, fluid resuscitation, and transfusion to a hemoglobin threshold of 7; I would start an IV proton pump inhibitor, hold the naproxen and apixaban and reverse the anticoagulation if needed, make the patient NPO, send a type and crossmatch, and arrange urgent GI consultation for upper endoscopy. I would risk-stratify with a Glasgow-Blatchford score and monitor him in a higher level of care.',
+    scoring: {
+      summary: { age: ['72'], sex: ['man', 'male', 'gentleman'], pmh: ['naproxen', 'nsaid', 'apixaban', 'anticoagulation', 'atrial fibrillation'], cc: ['melena', 'black stool', 'tarry', 'gi bleed', 'bleed'] },
+      hpi: { onset: ['two days', '2 days'], melena: ['melena', 'black', 'tarry'], symptoms: ['lightheaded', 'near-syncope', 'near syncope', 'dizziness'], risk: ['naproxen', 'nsaid', 'apixaban', 'anticoagulant', 'epigastric'], negatives: ['no hematemesis', 'denies hematemesis', 'no hematochezia', 'no chest pain'] },
+      ros: { positive: ['melena', 'lightheaded', 'fatigue', 'epigastric'], negative: ['denies', 'no hematemesis', 'no weight loss', 'no fever'] },
+      pmh: { conditions: ['osteoarthritis', 'atrial fibrillation', 'hypertension'], meds: ['naproxen', 'apixaban', 'lisinopril'], allergies: ['nkda', 'no known', 'allergies'] },
+      psocial: { social: ['smoker', 'alcohol', 'drinks', 'lives with'], family: ['family', 'malignancy'] },
+      exam: { vitals: ['112', 'tachycardic', '96/58', 'orthostatic', 'orthostasis'], pallor: ['pale', 'pallor', 'diaphoretic'], abd: ['epigastric', 'tender', 'bowel sounds'], rectal: ['rectal', 'guaiac', 'black', 'tarry stool'] },
+      data: { hgb: ['hemoglobin', 'hgb', '7.8', 'anemia'], bun: ['bun', 'urea', 'ratio'], coags: ['inr', 'platelet'], type: ['type and screen', 'crossmatch', 'type & screen'] },
+      assessment: { leading: ['upper gi bleed', 'upper gastrointestinal bleed', 'ugib', 'peptic ulcer', 'gi bleed'], reasoning: ['nsaid', 'naproxen', 'anticoagulation', 'apixaban', 'hemodynamic', 'melena'] },
+      plan: { access: ['large-bore', 'large bore', 'two iv', 'iv access', 'resuscitation', 'fluids'], transfuse: ['transfuse', 'transfusion', 'blood', 'hemoglobin of 7', 'threshold'], ppi: ['proton pump', 'ppi', 'pantoprazole', 'protonix'], reverse: ['hold', 'reverse', 'stop apixaban', 'hold naproxen', 'anticoagulation'], gi: ['gi consult', 'endoscopy', 'egd', 'gastroenterology'] },
+      critical: ['gi bleed', 'transfus', 'endoscopy'],
+      questions: [
+        { q: 'How does the BUN-to-creatinine ratio help you here?', model: 'A disproportionately elevated BUN relative to creatinine suggests an upper GI source — digested blood in the gut is absorbed as urea, and a degree of prerenal azotemia from hypovolemia adds to it. A ratio above ~30 raises the likelihood of an upper rather than lower GI bleed.' },
+        { q: 'What is your transfusion threshold and why not transfuse more liberally?', model: 'For most hemodynamically stable patients with GI bleeding, a restrictive threshold of hemoglobin 7 g/dL (with a target of 7–9) improves outcomes compared with a liberal strategy; over-transfusion can raise portal pressure and worsen bleeding, particularly in variceal hemorrhage. I would transfuse more aggressively if he were actively unstable or had ongoing massive bleeding.' },
+      ],
+    },
+  },
+];
+
+/* ════════════════════════════════════════════════════════════════
+   RUBRIC + SCORING ENGINE
+   ════════════════════════════════════════════════════════════════ */
+const RUBRIC = [
+  { key: 'summary',    label: 'Summary Statement', max: 10, color: '#60a5fa' },
+  { key: 'hpi',        label: 'HPI',               max: 15, color: '#a78bfa' },
+  { key: 'ros',        label: 'Review of Systems', max: 8,  color: '#34d399' },
+  { key: 'pmh',        label: 'PMH / Meds / Allergies', max: 10, color: '#fbbf24' },
+  { key: 'psocial',    label: 'Family & Social Hx', max: 6,  color: '#f59e0b' },
+  { key: 'exam',       label: 'Physical Exam',     max: 13, color: '#f87171' },
+  { key: 'data',       label: 'Data & Studies',    max: 12, color: '#fb923c' },
+  { key: 'assessment', label: 'Assessment',        max: 12, color: '#f472b6' },
+  { key: 'plan',       label: 'Plan',              max: 9,  color: '#22d3ee' },
+  { key: 'flow',       label: 'Flow & Order',      max: 5,  color: '#818cf8' },
+];
+const FLOW_ORDER = ['summary','hpi','ros','pmh','psocial','exam','data','assessment','plan'];
+const FLOW_LABELS = { summary:'summary statement', hpi:'HPI', ros:'review of systems', pmh:'past history', psocial:'social history', exam:'physical exam', data:'data', assessment:'assessment', plan:'plan' };
+const CAT_LABELS = { summary:'Summary statement', hpi:'HPI', ros:'Review of systems', pmh:'PMH/meds/allergies', psocial:'Family & social history', exam:'Physical exam', data:'Data & studies', assessment:'Assessment', plan:'Plan', flow:'Flow & order' };
+const COACHING = {
+  summary: 'Open with a tight summary statement: "[age]-year-old [sex] with [pertinent PMH] presenting with [key features]." It frames the entire H&P and signals your clinical reasoning in one sentence.',
+  hpi: 'Build the HPI as a narrative around OLDCARTS, weaving in the relevant risk factors and the pertinent negatives that shape your differential.',
+  ros: "A focused review of systems should hit the systems relevant to the presentation — both the positives and the key negatives that argue for or against your leading diagnosis.",
+  pmh: 'Always state medications and allergies explicitly — they change management. Tie the past medical history to the current problem.',
+  psocial: 'Include the family and social history elements that matter for risk and disposition — tobacco, alcohol, living situation, and relevant family history.',
+  exam: 'Lead the exam with vitals, then report pertinent positives and explicit pertinent negatives by system rather than a normal head-to-toe recitation.',
+  data: "Interpret the data, don't just list it — say what the lab or study means for this patient (\"a BNP of 1,850 supports a cardiac cause\").",
+  assessment: 'Commit to a one-line problem representation and a leading diagnosis with your reasoning, then briefly address the alternatives you considered.',
+  plan: 'Organize the plan by problem and make each item specific — what intervention, what monitoring, what consult, and what disposition.',
+  flow: 'Deliver the H&P in the expected order: summary statement, HPI, review of systems, past history, social history, exam, data — then your assessment and plan. Presenting your assessment before the data makes it sound like a guess.',
+};
+
+let currentCase = null, pendingResult = null;
+
+function scoreLocally(presentation, c) {
+  const t = presentation.toLowerCase();
+  const s = c.scoring;
+  const hits = (list) => list.some(kw => t.includes(kw.toLowerCase()));
+  function groupScore(groups) {
+    const keys = Object.keys(groups);
+    const matched = keys.filter(k => hits(groups[k]));
+    return { matched: matched.length, total: keys.length };
+  }
+  const g = {
+    summary: groupScore(s.summary), hpi: groupScore(s.hpi), ros: groupScore(s.ros),
+    pmh: groupScore(s.pmh), psocial: groupScore(s.psocial), exam: groupScore(s.exam),
+    data: groupScore(s.data), assessment: groupScore(s.assessment), plan: groupScore(s.plan),
+  };
+  const maxOf = (k) => RUBRIC.find(r => r.key === k).max;
+  const pct = (gr, k) => Math.round((gr.matched / gr.total) * maxOf(k));
+
+  // Flow
+  const flowGroupsFor = (k) => s[k];
+  function flowFirstIndex(k) {
+    let min = Infinity;
+    Object.values(flowGroupsFor(k)).forEach(list => list.forEach(kw => {
+      const idx = t.indexOf(kw.toLowerCase());
+      if (idx !== -1 && idx < min) min = idx;
+    }));
+    return min;
+  }
+  const flowRank = {}; FLOW_ORDER.forEach((k, i) => { flowRank[k] = i; });
+  const flowPresent = FLOW_ORDER.map(k => ({ key: k, idx: flowFirstIndex(k) }))
+    .filter(o => o.idx !== Infinity).sort((a, b) => a.idx - b.idx);
+  let flowScore = 0; const flowIssues = [];
+  if (flowPresent.length >= 2) {
+    let concordant = 0, pairs = 0;
+    for (let i = 0; i < flowPresent.length - 1; i++) {
+      pairs++;
+      const a = flowPresent[i].key, b = flowPresent[i + 1].key;
+      if (flowRank[a] < flowRank[b]) concordant++;
+      else flowIssues.push(`Flow: ${FLOW_LABELS[a]} came before ${FLOW_LABELS[b]} — present the ${FLOW_LABELS[b]} first.`);
+    }
+    flowScore = Math.round((concordant / pairs) * maxOf('flow'));
+  }
+
+  const scores = {
+    summary: pct(g.summary, 'summary'), hpi: pct(g.hpi, 'hpi'), ros: pct(g.ros, 'ros'),
+    pmh: pct(g.pmh, 'pmh'), psocial: pct(g.psocial, 'psocial'), exam: pct(g.exam, 'exam'),
+    data: pct(g.data, 'data'), assessment: pct(g.assessment, 'assessment'), plan: pct(g.plan, 'plan'),
+    flow: flowScore,
+  };
+  const total = Object.values(scores).reduce((a, b) => a + b, 0);
+  const grade = total >= 90 ? 'A' : total >= 80 ? 'B' : total >= 70 ? 'C' : total >= 60 ? 'D' : 'F';
+
+  // Critical misses
+  const critical_misses = (s.critical || []).filter(kw => !t.includes(kw.toLowerCase()))
+    .map(kw => `Did not address "${kw}" — a key element for this case.`);
+  if (scores.assessment === 0) critical_misses.unshift('Did not commit to an assessment — every H&P must end with a leading diagnosis and reasoning.');
+
+  // Strengths
+  const strengths = Object.entries(scores)
+    .filter(([k, v]) => v / maxOf(k) >= 0.75)
+    .map(([k]) => `Strong ${CAT_LABELS[k]} — covered the key elements well.`);
+
+  // Improvements
+  const improvements = [];
+  Object.entries(scores).forEach(([k, v]) => {
+    if (k !== 'flow' && v / maxOf(k) < 0.6) improvements.push(`${CAT_LABELS[k]}: missing key elements — review the chart for what you left out.`);
+  });
+  flowIssues.slice(0, 2).reverse().forEach(m => improvements.unshift(m));
+
+  const worst = Object.entries(scores).reduce((wk, [k, v]) =>
+    v / maxOf(k) < scores[wk] / maxOf(wk) ? k : wk, 'summary');
+
+  const grade_summary = total >= 90 ? 'Excellent H&P — thorough, well-organized, and clinically sound.'
+    : total >= 80 ? 'Good H&P with solid reasoning. A few gaps to tighten up.'
+    : total >= 70 ? 'Adequate H&P, but missing elements an attending would expect.'
+    : total >= 60 ? 'Significant gaps — key portions of the H&P are incomplete.'
+    : 'Major revision needed — foundational components of the H&P are missing.';
+
+  return {
+    scores, total, grade, grade_summary,
+    strengths: strengths.length ? strengths : ['Presentation attempted — keep practicing with the feedback below.'],
+    improvements: improvements.slice(0, 7),
+    critical_misses, coaching_tip: COACHING[worst] || COACHING.summary,
+    model: c.model, questions: (s.questions || []).slice(0, 2),
+  };
+}
+
+/* ════════════════════════════════════════════════════════════════
+   NAVIGATION
+   ════════════════════════════════════════════════════════════════ */
+function startFormat(fmt) {
+  if (fmt !== 'hnp') return;
+  document.getElementById('im-landing').classList.add('hidden');
+}
+function backToFormats() {
+  goBack();
+  document.getElementById('im-landing').classList.remove('hidden');
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  renderCaseGrid();
+  document.getElementById('rubric-line').innerHTML = 'Scored on: ' +
+    RUBRIC.map(r => `${r.label} <b>${r.max}</b>`).join(' · ');
+});
+
+function renderCaseGrid() {
+  document.getElementById('case-grid').innerHTML = CASES.map(c => `
+    <div class="case-card" onclick="selectCase(${c.id})">
+      <div class="case-card-top">
+        <div class="case-emoji">${c.emoji}</div>
+        <div>
+          <div class="case-cat">${c.cat} · ${c.demographics}</div>
+          <div class="case-card-title">${c.title}</div>
+        </div>
+      </div>
+      <div class="case-card-hook">${c.hook}</div>
+      <div class="diff-pill diff-${c.difficulty}">${c.difficulty}</div>
+    </div>`).join('');
+}
+
+function showWorkspace(view) {
+  document.getElementById('presentation-area').style.display = view === 'input' ? 'flex' : 'none';
+  document.getElementById('attending-panel').classList.toggle('visible', view === 'questions');
+  document.getElementById('results-panel').classList.toggle('visible', view === 'results');
+  document.getElementById('input-panel').scrollTop = 0;
+}
+
+function selectCase(id) {
+  currentCase = CASES.find(c => c.id === id);
+  if (!currentCase) return;
+  document.getElementById('case-select-view').classList.add('hidden');
+  document.getElementById('case-detail-view').classList.add('visible');
+  document.getElementById('case-detail-content').innerHTML = renderCaseDetail(currentCase);
+  document.getElementById('main').classList.remove('select-mode');
+  showWorkspace('input');
+  pendingResult = null;
+  document.getElementById('presentation-input').value = '';
+  updateWordCount();
+  document.getElementById('case-panel').scrollTop = 0;
+}
+
+function renderCaseDetail(c) {
+  const kv = (k, v) => `<div class="kv"><div class="kv-k">${k}</div><div class="kv-v">${v}</div></div>`;
+  return `
+    <div class="cd-title">${c.emoji} ${c.title}</div>
+    <div class="cd-chips"><div class="cd-chip">${c.cat}</div><div class="cd-chip">${c.demographics}</div><div class="cd-chip">${c.difficulty}</div></div>
+    <div class="sec"><div class="sec-label">Chief Complaint & Vitals</div><div class="sec-body"><strong>${c.admit.cc}</strong><br>${c.admit.vitals}</div></div>
+    <div class="sec"><div class="sec-label">History of Present Illness</div><div class="sec-body">${c.hpi}</div></div>
+    <div class="sec"><div class="sec-label">Review of Systems</div><div class="sec-body">${c.ros}</div></div>
+    <div class="sec"><div class="sec-label">Past Medical / Surgical History</div><div class="pill-list">${c.pmh.map(x => `<span class="pill">${x}</span>`).join('')}</div></div>
+    <div class="sec"><div class="sec-label">Medications</div><div class="pill-list">${c.meds.map(x => `<span class="pill">${x}</span>`).join('')}</div></div>
+    <div class="sec"><div class="sec-label">Allergies</div><div class="sec-body">${c.allergies}</div></div>
+    <div class="sec"><div class="sec-label">Family & Social History</div><div class="sec-body"><strong>Family:</strong> ${c.family}<br><strong>Social:</strong> ${c.social}</div></div>
+    <div class="sec"><div class="sec-label">Physical Exam</div><div class="kv-grid">${Object.entries(c.exam).map(([k, v]) => kv(k, v)).join('')}</div></div>
+    <div class="sec"><div class="sec-label">Data & Studies</div><div class="kv-grid">${c.data.map(d => kv(d.k, d.v)).join('')}</div></div>`;
+}
+
+function goBack() {
+  if (isRecording) stopDictation();
+  currentCase = null; pendingResult = null;
+  document.getElementById('case-select-view').classList.remove('hidden');
+  document.getElementById('case-detail-view').classList.remove('visible');
+  document.getElementById('main').classList.add('select-mode');
+  showWorkspace('input');
+  document.getElementById('presentation-input').value = '';
+  updateWordCount();
+}
+
+/* ── SUBMIT FLOW ── */
+function submitPresentation() {
+  if (!currentCase) return;
+  const text = document.getElementById('presentation-input').value.trim();
+  if (text.length < 40) { alert('Please enter a fuller presentation before scoring.'); return; }
+  const result = scoreLocally(text, currentCase);
+  if (result.questions && result.questions.length) showAttendingQuestions(result);
+  else displayResults(result, []);
+}
+
+function showAttendingQuestions(result) {
+  pendingResult = result;
+  document.getElementById('aq-questions-container').innerHTML = result.questions.map((q, i) => `
+    <div class="aq-card">
+      <div class="aq-num">Question ${i + 1} of ${result.questions.length}</div>
+      <div class="aq-question">${q.q}</div>
+      <textarea class="aq-textarea" id="aq-answer-${i}" placeholder="Type your answer here…"></textarea>
+    </div>`).join('');
+  showWorkspace('questions');
+}
+
+function submitAttendingAnswers() {
+  if (!pendingResult) return;
+  const answers = pendingResult.questions.map((q, i) => ({
+    question: q.q, userAnswer: (document.getElementById(`aq-answer-${i}`)?.value || '').trim(), model: q.model,
+  }));
+  displayResults(pendingResult, answers);
+  pendingResult = null;
+}
+
+function displayResults(r, qna) {
+  document.getElementById('results-header').innerHTML = `
+    <div class="grade-circle grade-${r.grade}"><div class="grade-letter">${r.grade}</div><div class="grade-pct">${r.total}/100</div></div>
+    <div style="font-size:15px;font-weight:800;color:#f8fafc;">${gradeLabel(r.grade)}</div>`;
+  document.getElementById('grade-summary').textContent = r.grade_summary;
+
+  document.getElementById('score-bars').innerHTML = RUBRIC.map(cat => {
+    const score = r.scores[cat.key] ?? 0;
+    const p = Math.round((score / cat.max) * 100);
+    return `<div class="score-bar-row"><div class="score-bar-label">${cat.label}</div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:${p}%;background:${cat.color};"></div></div>
+      <div class="score-bar-val" style="color:${cat.color}">${score}/${cat.max}</div></div>`;
+  }).join('');
+
+  fillCard('strengths', r.strengths, 'green');
+  fillCard('improvements', r.improvements, 'amber');
+  fillCard('critical', r.critical_misses, 'red');
+
+  if (r.coaching_tip) {
+    document.getElementById('coaching-card').style.display = 'block';
+    document.getElementById('coaching-text').textContent = r.coaching_tip;
+  }
+
+  const aqSection = document.getElementById('aq-results-section');
+  if (qna && qna.length) {
+    aqSection.style.display = 'block';
+    aqSection.innerHTML = `<div class="score-bars-title">🩺 Attending Q&A</div>` + qna.map(item => `
+      <div class="fc-card" style="display:block;">
+        <div class="fc-text" style="color:#e2e8f0;font-weight:700;margin-bottom:8px;">${item.question}</div>
+        <div class="aq-num" style="color:#475569;">Your answer</div>
+        <div class="fc-text" style="margin-bottom:10px;">${item.userAnswer || '<em style="opacity:0.5">No answer provided</em>'}</div>
+        <div class="aq-num" style="color:#60a5fa;">Model answer</div>
+        <div class="fc-text">${item.model}</div>
+      </div>`).join('');
+  } else aqSection.style.display = 'none';
+
+  document.getElementById('model-body').textContent = r.model || '';
+  document.getElementById('model-body').classList.remove('visible');
+  document.getElementById('model-icon').textContent = '▼';
+  showWorkspace('results');
+}
+
+function fillCard(id, items, dot) {
+  const card = document.getElementById(id + '-card');
+  if (items && items.length) {
+    card.style.display = 'block';
+    document.getElementById(id + '-list').innerHTML = items.map(s =>
+      `<div class="fc-item"><div class="fc-dot ${dot}"></div><div class="fc-text">${s}</div></div>`).join('');
+  } else card.style.display = 'none';
+}
+
+function gradeLabel(g) {
+  return { A: 'Excellent H&P', B: 'Good H&P', C: 'Needs Improvement', D: 'Significant Gaps', F: 'Major Revision Required' }[g] || '';
+}
+
+function toggleModel() {
+  const body = document.getElementById('model-body');
+  body.classList.toggle('visible');
+  document.getElementById('model-icon').textContent = body.classList.contains('visible') ? '▲' : '▼';
+}
+function tryAgain() { showWorkspace('input'); pendingResult = null; }
+function clearPresentation() { if (isRecording) stopDictation(); document.getElementById('presentation-input').value = ''; updateWordCount(); }
+
+/* ── WORD COUNT ── */
+function updateWordCount() {
+  const text = document.getElementById('presentation-input').value.trim();
+  const words = text ? text.split(/\s+/).length : 0;
+  document.getElementById('word-count').textContent = words;
+  const secs = Math.round((words / 130) * 60);
+  document.getElementById('time-est').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+  document.getElementById('submit-btn').disabled = words < 15;
+}
+
+/* ── DICTATION (Web Speech API) ── */
+let recognition = null, isRecording = false, baseTranscript = '';
+function initSpeech() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.continuous = true; r.interimResults = true; r.lang = 'en-US';
+  r.onresult = (e) => {
+    let finalText = '', interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const tr = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finalText += tr + ' '; else interim += tr;
+    }
+    if (finalText) baseTranscript += finalText;
+    document.getElementById('presentation-input').value = (baseTranscript + interim).trim();
+    updateWordCount();
+  };
+  r.onerror = (e) => { setMic(`Mic error: ${e.error}`); stopDictation(); };
+  r.onend = () => { if (isRecording) r.start(); };
+  return r;
+}
+function toggleDictation() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { setMic('Dictation needs Chrome or Edge.'); return; }
+  if (isRecording) stopDictation(); else startDictation();
+}
+function startDictation() {
+  if (!recognition) recognition = initSpeech();
+  if (!recognition) return;
+  baseTranscript = document.getElementById('presentation-input').value;
+  if (baseTranscript && !baseTranscript.endsWith(' ')) baseTranscript += ' ';
+  isRecording = true;
+  document.getElementById('mic-btn').classList.add('recording');
+  document.getElementById('mic-label').textContent = 'Stop';
+  setMic('Listening… speak your H&P.');
+  try { recognition.start(); } catch (e) {}
+}
+function stopDictation() {
+  isRecording = false;
+  if (recognition) try { recognition.stop(); } catch (e) {}
+  document.getElementById('mic-btn').classList.remove('recording');
+  document.getElementById('mic-label').textContent = 'Dictate';
+  setMic('');
+}
+function setMic(msg) { document.getElementById('mic-status').textContent = msg; }
+</script>
+</body>
+</html>

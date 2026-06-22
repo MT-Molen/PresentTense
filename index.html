@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Present Tense — Medical Oral Presentation Trainer</title>
+  <meta name="description" content="Free oral presentation trainer for medical students and residents across specialties. Practice realistic cases, commit to a diagnosis, address can't-miss differentials, and get instant rubric-based feedback. No login, no data collected."/>
+  <meta property="og:title" content="Present Tense — Medical Oral Presentation Trainer"/>
+  <meta property="og:description" content="Practice medical oral presentations on realistic cases with instant rubric-based feedback and attending-style questions. Free, no login."/>
+  <meta property="og:type" content="website"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #080a0f;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #f8fafc;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: #0d1117;
+      border-bottom: 1px solid #1e2330;
+      padding: 16px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .header-title { font-size: 17px; font-weight: 900; letter-spacing: 0.5px; color: #f8fafc; }
+    .header-sub { font-size: 12px; color: #475569; margin-top: 2px; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 700;
+      padding: 8px 16px; border-radius: 8px; border: none;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-primary { background: #ef4444; color: #fff; }
+    .btn-primary:hover { background: #dc2626; }
+    .btn-ghost { background: #131824; color: #94a3b8; border: 1px solid #1e2330; }
+    .btn-ghost:hover { background: #1e2330; color: #f8fafc; }
+    .btn-blue { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
+    .btn-blue:hover { background: rgba(59,130,246,0.25); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+
+    /* ── MAIN LAYOUT ── */
+    .main { display: grid; grid-template-columns: 1fr 440px; min-height: calc(100vh - 65px); }
+    .main.select-mode { grid-template-columns: 1fr; }
+    .main.select-mode .case-panel { border-right: none; max-width: 1000px; margin: 0 auto; width: 100%; }
+    .main.select-mode .input-panel { display: none; }
+    .main.select-mode .case-grid { grid-template-columns: repeat(3, 1fr); }
+
+    /* ── LEFT: CASE PANEL ── */
+    .case-panel {
+      border-right: 1px solid #1e2330;
+      padding: 28px 32px; overflow-y: auto;
+    }
+
+    /* Case Selection */
+    .case-select-view {}
+    .select-header { margin-bottom: 24px; }
+    .select-title { font-size: 18px; font-weight: 900; color: #f8fafc; margin-bottom: 6px; }
+    .select-sub { font-size: 13px; color: #475569; line-height: 1.6; }
+
+    .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .case-card {
+      background: #0d1117; border: 1px solid #1e2330;
+      border-radius: 12px; padding: 18px 16px; cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s;
+      position: relative; overflow: hidden;
+    }
+    .case-card:hover { border-color: #2d3348; transform: translateY(-2px); }
+    .case-card.selected { border-color: #3b82f6; }
+    .case-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .case-emoji { font-size: 22px; }
+    .case-meta { flex: 1; }
+    .case-cat { font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #475569; margin-bottom: 2px; }
+    .case-card-title { font-size: 13px; font-weight: 800; color: #f8fafc; line-height: 1.3; }
+    .case-card-hook { font-size: 11px; color: #475569; line-height: 1.5; margin-bottom: 12px; }
+    .diff-pill {
+      display: inline-block; border-radius: 6px; padding: 3px 9px;
+      font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .diff-basic    { background: rgba(34,197,94,0.12);  color: #4ade80; }
+    .diff-intermediate { background: rgba(245,158,11,0.12); color: #fbbf24; }
+    .diff-advanced { background: rgba(239,68,68,0.12);  color: #f87171; }
+
+    /* Case Detail View */
+    .case-detail-view { display: none; }
+    .case-detail-view.visible { display: block; }
+    .case-select-view.hidden { display: none; }
+
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 700; color: #475569;
+      background: none; border: none; cursor: pointer; margin-bottom: 20px;
+      padding: 0;
+    }
+    .back-btn:hover { color: #94a3b8; }
+
+    .case-detail-header { margin-bottom: 20px; }
+    .case-detail-title { font-size: 18px; font-weight: 900; color: #f8fafc; margin-bottom: 6px; }
+    .case-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip {
+      background: #131824; border: 1px solid #1e2330;
+      border-radius: 6px; padding: 4px 10px;
+      font-size: 11px; font-weight: 600; color: #475569;
+    }
+
+    /* Triage Strip */
+    .triage-strip {
+      background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 10px; padding: 12px 16px; margin-bottom: 18px;
+    }
+    .triage-label { font-size: 9px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #ef4444; margin-bottom: 6px; }
+    .triage-cc { font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 6px; }
+    .triage-vitals { font-size: 12px; color: #94a3b8; font-family: monospace; line-height: 1.7; }
+
+    /* Clinical Sections */
+    .clinical-section { margin-bottom: 16px; }
+    .clin-label {
+      font-size: 9px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+      color: #334155; margin-bottom: 8px; padding-bottom: 6px;
+      border-bottom: 1px solid #1e2330;
+    }
+    .clin-body { font-size: 12.5px; color: #94a3b8; line-height: 1.7; }
+    .clin-body strong { color: #e2e8f0; }
+
+    .exam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .exam-item { background: #131824; border-radius: 8px; padding: 9px 11px; }
+    .exam-item-label { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #334155; margin-bottom: 3px; }
+    .exam-item-val { font-size: 11.5px; color: #94a3b8; line-height: 1.4; }
+
+    .lab-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+    .lab-item { background: #131824; border-radius: 8px; padding: 8px 10px; }
+    .lab-name { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #334155; margin-bottom: 2px; }
+    .lab-val { font-size: 12px; font-weight: 700; color: #94a3b8; }
+    .lab-val.abnormal { color: #f87171; }
+    .lab-val.normal { color: #4ade80; }
+
+    /* ── RIGHT: INPUT + RESULTS PANEL ── */
+    .input-panel {
+      display: flex; flex-direction: column;
+      background: #080a0f; overflow-y: auto;
+    }
+
+    /* Rubric hint line */
+    .rubric-line { font-size: 11px; color: #334155; margin-top: 8px; line-height: 1.6; }
+    .rubric-line b { color: #475569; font-weight: 700; }
+
+    /* Presentation textarea area */
+    .presentation-area { padding: 24px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+    .area-label { font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 8px; }
+    .presentation-input {
+      width: 100%; flex: 1; min-height: 260px;
+      background: #0d1117; border: 1px solid #1e2330;
+      border-radius: 10px; padding: 16px;
+      color: #e2e8f0; font-size: 13px; line-height: 1.7;
+      resize: vertical; font-family: inherit;
+    }
+    .presentation-input:focus { outline: none; border-color: #2d3348; }
+    .presentation-input::placeholder { color: #2d3348; }
+
+    .input-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 10px;
+    }
+    .word-count { font-size: 12px; color: #334155; }
+    .word-count .wc-num { font-weight: 700; }
+    .word-count .wc-num.good { color: #4ade80; }
+    .word-count .wc-num.short { color: #fbbf24; }
+    .word-count .wc-num.long { color: #f87171; }
+    .wc-hint { font-size: 11px; color: #334155; margin-top: 2px; }
+
+    /* ── MIC BUTTON ── */
+    .btn-mic {
+      background: #131824; color: #94a3b8;
+      border: 1px solid #1e2330; border-radius: 8px;
+      padding: 8px 14px; font-size: 12px; font-weight: 700;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-mic:hover { background: #1e2330; color: #f8fafc; }
+    .btn-mic.recording {
+      background: rgba(239,68,68,0.15); color: #f87171;
+      border-color: rgba(239,68,68,0.4);
+      animation: pulse-border 1.2s ease-in-out infinite;
+    }
+    .mic-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: currentColor; flex-shrink: 0;
+    }
+    .btn-mic.recording .mic-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.3); }
+      50%       { box-shadow: 0 0 0 4px rgba(239,68,68,0); }
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+    }
+    .mic-status { font-size: 11px; color: #334155; margin-top: 4px; }
+    .mic-status.active { color: #f87171; }
+
+    /* ── RESULTS ── */
+    .results-panel { display: none; padding: 24px 24px 40px; flex-direction: column; gap: 18px; }
+    .results-panel.visible { display: flex; }
+
+    .results-header {
+      background: #0d1117; border: 1px solid #1e2330;
+      border-radius: 12px; padding: 18px 20px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .grade-circle {
+      width: 68px; height: 68px; border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      flex-shrink: 0; font-weight: 900;
+    }
+    .grade-letter { font-size: 24px; line-height: 1; }
+    .grade-pct { font-size: 10px; font-weight: 700; opacity: 0.8; }
+    .grade-A { background: rgba(34,197,94,0.15); color: #4ade80; border: 2px solid #22c55e; }
+    .grade-B { background: rgba(59,130,246,0.15); color: #60a5fa; border: 2px solid #3b82f6; }
+    .grade-C { background: rgba(245,158,11,0.15); color: #fbbf24; border: 2px solid #f59e0b; }
+    .grade-D { background: rgba(239,68,68,0.15); color: #f87171; border: 2px solid #ef4444; }
+    .grade-F { background: rgba(100,116,139,0.15); color: #94a3b8; border: 2px solid #64748b; }
+
+    .grade-meta { flex: 1; }
+    .grade-meta h3 { font-size: 15px; font-weight: 800; color: #f8fafc; margin-bottom: 4px; }
+    .grade-summary { font-size: 12.5px; color: #64748b; line-height: 1.5; }
+
+    /* Score Bars */
+    .score-bars-section {}
+    .score-bars-title { font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #334155; margin-bottom: 12px; }
+    .score-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .score-bar-label { font-size: 11px; color: #64748b; width: 110px; flex-shrink: 0; }
+    .score-bar-track { flex: 1; background: #131824; border-radius: 4px; height: 8px; }
+    .score-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+    .score-bar-val { font-size: 11px; font-weight: 700; color: #94a3b8; width: 36px; text-align: right; flex-shrink: 0; }
+
+    /* Feedback cards */
+    .feedback-card {
+      background: #0d1117; border: 1px solid #1e2330;
+      border-radius: 12px; padding: 16px 18px;
+      border-left: 3px solid;
+    }
+    .feedback-card.strengths { border-left-color: #22c55e; }
+    .feedback-card.improvements { border-left-color: #f59e0b; }
+    .feedback-card.critical { border-left-color: #ef4444; }
+    .feedback-card.coaching { border-left-color: #3b82f6; }
+
+    .fc-title {
+      font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .fc-title.green { color: #4ade80; }
+    .fc-title.amber { color: #fbbf24; }
+    .fc-title.red   { color: #f87171; }
+    .fc-title.blue  { color: #60a5fa; }
+
+    .fc-list { display: flex; flex-direction: column; gap: 7px; }
+    .fc-item { display: flex; align-items: flex-start; gap: 8px; }
+    .fc-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+    .fc-dot.green { background: #22c55e; }
+    .fc-dot.amber { background: #f59e0b; }
+    .fc-dot.red   { background: #ef4444; }
+    .fc-text { font-size: 12.5px; color: #94a3b8; line-height: 1.5; }
+
+    .coaching-text { font-size: 13px; color: #94a3b8; line-height: 1.6; }
+
+    /* ── ATTENDING QUESTIONS ── */
+    .attending-panel {
+      display: none; padding: 24px 24px 40px; flex-direction: column; gap: 18px;
+    }
+    .attending-panel.visible { display: flex; }
+
+    .aq-header {
+      background: #0d1117; border: 1px solid #1e2330;
+      border-left: 3px solid #a855f7;
+      border-radius: 12px; padding: 18px 20px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .aq-header-icon { font-size: 28px; flex-shrink: 0; }
+    .aq-header-text h3 { font-size: 15px; font-weight: 800; color: #f8fafc; margin-bottom: 4px; }
+    .aq-header-text p { font-size: 12px; color: #64748b; line-height: 1.5; }
+
+    .aq-card {
+      background: #0d1117; border: 1px solid #1e2330;
+      border-radius: 12px; padding: 18px 20px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .aq-num {
+      font-size: 9px; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; color: #a855f7;
+    }
+    .aq-question { font-size: 14px; font-weight: 700; color: #f8fafc; line-height: 1.5; }
+    .aq-textarea {
+      width: 100%; min-height: 76px;
+      background: #131824; border: 1px solid #1e2330;
+      border-radius: 8px; padding: 12px;
+      color: #e2e8f0; font-size: 12.5px; line-height: 1.6;
+      resize: vertical; font-family: inherit;
+    }
+    .aq-textarea:focus { outline: none; border-color: #2d3348; }
+    .aq-textarea::placeholder { color: #2d3348; }
+
+    /* Q&A in results */
+    .aq-result-section-title {
+      font-size: 10px; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; color: #334155; margin-bottom: 12px;
+    }
+    .aq-result-card {
+      background: #0d1117; border: 1px solid #1e2330;
+      border-left: 3px solid #a855f7;
+      border-radius: 12px; padding: 16px 18px;
+      display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 12px;
+    }
+    .aq-result-q { font-size: 13px; font-weight: 700; color: #e2e8f0; line-height: 1.4; }
+    .aq-result-block { border-radius: 8px; padding: 10px 12px; }
+    .aq-result-your { background: rgba(168,85,247,0.07); border-left: 2px solid #a855f7; }
+    .aq-result-model { background: rgba(34,197,94,0.06); border-left: 2px solid #22c55e; margin-top: 4px; }
+    .aq-result-label {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; margin-bottom: 4px;
+    }
+    .aq-result-your .aq-result-label  { color: #a855f7; }
+    .aq-result-model .aq-result-label { color: #4ade80; }
+    .aq-result-text { font-size: 12px; color: #94a3b8; line-height: 1.55; }
+
+    /* Model Answer */
+    .model-answer-section {}
+    .model-toggle-btn {
+      width: 100%; background: #131824; border: 1px solid #1e2330;
+      border-radius: 10px; padding: 12px 16px; cursor: pointer;
+      font-size: 12px; font-weight: 700; color: #475569;
+      text-align: left; transition: background 0.15s;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .model-toggle-btn:hover { background: #1e2330; color: #94a3b8; }
+    .model-answer-body {
+      display: none; background: #0d1117; border: 1px solid #1e2330;
+      border-top: none; border-radius: 0 0 10px 10px;
+      padding: 16px 18px; font-size: 12.5px; color: #94a3b8; line-height: 1.8;
+    }
+    .model-answer-body.visible { display: block; }
+
+    .try-again-row { display: flex; gap: 10px; margin-top: 4px; }
+
+    @media (max-width: 900px) {
+      .main { grid-template-columns: 1fr; }
+      .case-panel { border-right: none; border-bottom: 1px solid #1e2330; }
+      .case-grid, .main.select-mode .case-grid { grid-template-columns: 1fr; }
+    }
+    @media (min-width: 901px) and (max-width: 1200px) {
+      .main.select-mode .case-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ── LANDING / SPLASH ─────────────────────────────────────── */
+    .landing {
+      position: fixed; inset: 0; z-index: 1000;
+      background: radial-gradient(1100px 560px at 50% -12%, #11192b 0%, #080a0f 62%);
+      overflow-y: auto; padding: 52px 20px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .landing.hidden { display: none; }
+    .landing-inner { width: 100%; max-width: 720px; margin: auto; }
+    .landing-logo { font-size: 42px; font-weight: 900; letter-spacing: -1px; color: #f8fafc; text-align: center; }
+    .landing-logo span { color: #ef4444; }
+    .landing-tag { text-align: center; color: #94a3b8; font-size: 14px; margin-top: 8px; margin-bottom: 32px; }
+
+    .disclaimer-card {
+      background: rgba(239,68,68,0.06);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 14px; padding: 20px 22px; margin-bottom: 34px;
+    }
+    .disclaimer-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+      color: #f87171; margin-bottom: 12px;
+    }
+    .disclaimer-text { font-size: 13px; line-height: 1.7; color: #cbd5e1; }
+    .disclaimer-text strong { color: #f8fafc; font-weight: 700; }
+    .disclaimer-text p { margin-bottom: 9px; }
+    .disclaimer-text p:last-child { margin-bottom: 0; }
+
+    .track-label {
+      font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+      color: #475569; margin-bottom: 14px; text-align: center;
+    }
+    .track-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .track-card {
+      background: #0d1117; border: 1px solid #1e2330; border-radius: 14px;
+      padding: 22px 18px 18px; text-align: center; position: relative;
+      transition: border-color 0.15s, transform 0.1s;
+    }
+    .track-card.active { cursor: pointer; }
+    .track-card.active:hover { border-color: #3b82f6; transform: translateY(-2px); }
+    .track-card.soon { opacity: 0.5; }
+    .track-emoji { font-size: 30px; margin-bottom: 12px; }
+    .track-name { font-size: 14px; font-weight: 800; color: #f8fafc; margin-bottom: 4px; }
+    .track-desc { font-size: 11px; color: #475569; line-height: 1.5; min-height: 30px; }
+    .track-badge {
+      display: inline-block; margin-top: 12px;
+      font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+      padding: 4px 11px; border-radius: 100px;
+    }
+    .badge-available { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .badge-soon { background: rgba(148,163,184,0.12); color: #94a3b8; }
+    .landing-foot { text-align: center; font-size: 11px; color: #334155; margin-top: 30px; }
+
+    @media (max-width: 640px) { .track-grid { grid-template-columns: 1fr; } }
+
+    /* ── ALPHA BADGE ── */
+    .alpha-badge {
+      position: fixed; bottom: 14px; right: 14px; z-index: 1100;
+      background: rgba(245,158,11,0.15); color: #fbbf24;
+      border: 1px solid rgba(245,158,11,0.4);
+      font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+      padding: 5px 12px; border-radius: 100px; pointer-events: none;
+      backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+<body>
+
+<!-- LANDING / SPLASH -->
+<div class="landing" id="landing">
+  <div class="landing-inner">
+    <div class="landing-logo">Present <span>Tense</span></div>
+    <div class="landing-tag">An oral presentation trainer for the clinical clerkships</div>
+
+    <div class="disclaimer-card">
+      <div class="disclaimer-title">⚠️ Educational Use Only</div>
+      <div class="disclaimer-text">
+        <p><strong>For educational and training purposes only — this is not medical advice.</strong> All cases are fictional, and any resemblance to real patients is coincidental.</p>
+        <p><strong>Patient presentations vary by institution.</strong> The expected structure, emphasis, and "right answer" for an oral presentation differ across programs, specialties, and individual attendings. Use the scoring here as practice — and always defer to your own program's standards and your supervising physicians.</p>
+        <p><strong>🧪 These trainers are in alpha testing.</strong> Cases, scoring, and feedback are still being actively refined and may contain errors — verify anything important against authoritative sources.</p>
+        <p>Nothing you type or dictate ever leaves your browser. No login, no account, no data collected.</p>
+      </div>
+    </div>
+
+    <div class="track-label">Choose a Presentation Track</div>
+    <div class="track-grid">
+      <div class="track-card active" onclick="enterApp()">
+        <div class="track-emoji">🚑</div>
+        <div class="track-name">EM Presentation</div>
+        <div class="track-desc">Emergency medicine ED cases</div>
+        <div class="track-badge badge-available">Available Now</div>
+      </div>
+      <div class="track-card active" onclick="window.location.href='im.html'">
+        <div class="track-emoji">🩺</div>
+        <div class="track-name">IM Presentation</div>
+        <div class="track-desc">Internal medicine H&amp;P &amp; progress note presentations</div>
+        <div class="track-badge badge-available">Available Now</div>
+      </div>
+      <div class="track-card soon">
+        <div class="track-emoji">🔪</div>
+        <div class="track-name">Surgery Presentation</div>
+        <div class="track-desc">Surgical &amp; pre-op presentations</div>
+        <div class="track-badge badge-soon">Coming Soon</div>
+      </div>
+    </div>
+
+    <div class="landing-foot">By continuing you acknowledge this tool is for educational use only.</div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <button class="btn btn-ghost" onclick="goToLanding()" style="gap:6px;">← Tracks</button>
+    <div>
+      <div class="header-title">Present <span style="color:#ef4444;">Tense</span></div>
+      <div class="header-sub">Oral presentation trainer · Practice cases · Get instant feedback</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div style="font-size:11px; color:#475569;">No login · No data collected — everything runs in your browser</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main select-mode">
+
+  <!-- LEFT: CASE PANEL -->
+  <div class="case-panel" id="case-panel">
+
+    <!-- Case Selection -->
+    <div class="case-select-view" id="case-select-view">
+      <div class="select-header">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:6px;">
+          <div class="select-title" style="margin-bottom:0;">Choose from the Board</div>
+          <button class="btn btn-ghost" onclick="randomCase()" style="gap:8px;">🎲 Random Case</button>
+        </div>
+        <div class="select-sub">Cases show only the chief complaint — no diagnosis given. Work through the chart, then present: commit to a most likely diagnosis, address the can't-miss differentials, and state your plan.</div>
+      </div>
+      <div class="case-grid" id="case-grid"></div>
+    </div>
+
+    <!-- Case Detail -->
+    <div class="case-detail-view" id="case-detail-view">
+      <button class="back-btn" onclick="goBack()">← Back to cases</button>
+      <div id="case-detail-content"></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: WORKSPACE PANEL (input → questions → feedback) -->
+  <div class="input-panel" id="input-panel">
+
+    <!-- Presentation Input -->
+    <div class="presentation-area" id="presentation-area">
+      <div>
+        <div class="area-label">Your Oral Presentation</div>
+        <textarea
+          class="presentation-input"
+          id="presentation-input"
+          placeholder="Start with your one-liner: 'This is a [age]-year-old [sex] with a history of [PMH] presenting with [chief complaint]...'
+
+Then walk through HPI, pertinent history, physical exam, workup and results — and commit to your most likely diagnosis, address the can't-miss differentials, and close with your plan and disposition.
+
+Aim for 2–4 minutes (260–520 words)."
+          oninput="updateWordCount()"
+        ></textarea>
+      </div>
+      <div class="input-footer">
+        <div>
+          <div class="word-count">Words: <span class="wc-num" id="word-count">0</span> &nbsp;·&nbsp; Est. time: <span id="time-est">0:00</span></div>
+          <div class="wc-hint" id="wc-hint">Aim for 260–520 words (2–4 min)</div>
+        </div>
+        <div class="try-again-row">
+          <button class="btn-mic" id="mic-btn" onclick="toggleDictation()">
+            <div class="mic-dot"></div>
+            <span id="mic-label">Dictate</span>
+          </button>
+          <button class="btn btn-ghost" onclick="clearPresentation()">Clear</button>
+          <button class="btn btn-primary" id="submit-btn" onclick="submitPresentation()" disabled>Score Presentation</button>
+        </div>
+      </div>
+      <div class="mic-status" id="mic-status"></div>
+      <div class="rubric-line">Scored on: One-liner <b>10</b> · HPI <b>15</b> · Pertinent Hx <b>10</b> · Exam <b>13</b> · Workup <b>12</b> · Most Likely Dx <b>10</b> · Can't-Miss DDx <b>10</b> · Plan &amp; Dispo <b>10</b> · Flow &amp; Order <b>10</b></div>
+    </div>
+
+    <!-- Attending Questions -->
+    <div class="attending-panel" id="attending-panel">
+      <div class="aq-header">
+        <div class="aq-header-icon">🩺</div>
+        <div class="aq-header-text">
+          <h3>Your Attending Has a Question</h3>
+          <p>Answer before seeing your feedback — these topics weren't covered in your presentation.</p>
+        </div>
+      </div>
+      <div id="aq-questions-container"></div>
+      <div>
+        <button class="btn btn-primary" onclick="submitAttendingAnswers()">Submit Answers → View Feedback</button>
+      </div>
+    </div>
+
+    <!-- Feedback -->
+    <div class="results-panel" id="results-panel">
+
+      <!-- Grade Header -->
+      <div class="results-header" id="results-header"></div>
+
+      <!-- Score Bars -->
+      <div class="score-bars-section">
+        <div class="score-bars-title">Category Breakdown</div>
+        <div id="score-bars"></div>
+      </div>
+
+      <!-- Strengths -->
+      <div class="feedback-card strengths" id="strengths-card" style="display:none;">
+        <div class="fc-title green">✓ Strengths</div>
+        <div class="fc-list" id="strengths-list"></div>
+      </div>
+
+      <!-- Improvements -->
+      <div class="feedback-card improvements" id="improvements-card" style="display:none;">
+        <div class="fc-title amber">↑ Areas to Improve</div>
+        <div class="fc-list" id="improvements-list"></div>
+      </div>
+
+      <!-- Critical Misses -->
+      <div class="feedback-card critical" id="critical-card" style="display:none;">
+        <div class="fc-title red">⚠ Critical Misses</div>
+        <div class="fc-list" id="critical-list"></div>
+      </div>
+
+      <!-- Coaching Tip -->
+      <div class="feedback-card coaching" id="coaching-card" style="display:none;">
+        <div class="fc-title blue">💡 Attending's Coaching Tip</div>
+        <div class="coaching-text" id="coaching-text"></div>
+      </div>
+
+      <!-- Attending Q&A -->
+      <div id="aq-results-section" style="display:none;"></div>
+
+      <!-- Model Answer -->
+      <div class="model-answer-section">
+        <button class="model-toggle-btn" onclick="toggleModel()">
+          <span>📋 Show Model Presentation</span>
+          <span id="model-toggle-icon">▼</span>
+        </button>
+        <div class="model-answer-body" id="model-answer-body"></div>
+      </div>
+
+      <!-- Try Again -->
+      <div class="try-again-row">
+        <button class="btn btn-ghost" onclick="tryAgain()">Revise & Resubmit</button>
+        <button class="btn btn-blue" onclick="goBack()">New Case</button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div style="border-top:1px solid #1e2330; padding:18px 32px; text-align:center; font-size:11px; color:#334155; line-height:1.7;">
+  <strong style="color:#475569;">Present Tense</strong> · <span style="color:#fbbf24;">Alpha testing — cases &amp; scoring still being refined.</span> For educational use only — not medical advice. All cases are fictional and contain no patient data.
+  <br>Scoring is rubric-based and runs entirely in your browser; nothing you type or dictate is transmitted or stored.
+</div>
+
+<script>
+/* ── CASES ──────────────────────────────────────────────────── */
+const CASES = [
+  {
+    id: 1,
+    emoji: '🫀',
+    category: 'Cardiovascular',
+    title: 'Chest Pain — STEMI',
+    hook: '58M with crushing chest pain, diaphoresis, and ST elevations',
+    difficulty: 'intermediate',
+    triage: {
+      cc: 'Chest pain, 45 minutes',
+      vitals: 'BP 148/92  |  HR 102  |  RR 18  |  O₂ 97% RA  |  Temp 98.6°F  |  Pain 8/10'
+    },
+    demographics: '58-year-old male',
+    hpi: 'Substernal chest pressure for 45 minutes, rated 8/10. Onset while at rest watching TV. Radiates to the left arm and jaw. Associated with profuse diaphoresis and nausea. No relief with position change. Denies dyspnea, syncope, or palpitations.',
+    pmh: 'Hypertension, hyperlipidemia, type 2 diabetes mellitus. Prior PCI to RCA 4 years ago. Active smoker — 30 pack-year history.',
+    medications: 'Metformin 1000mg BID, atorvastatin 40mg, lisinopril 10mg, aspirin 81mg daily',
+    allergies: 'Penicillin (rash)',
+    social: 'Married, works as a truck driver. Drinks socially.',
+    ros: 'Positive: chest pressure, diaphoresis, nausea. Negative: SOB, syncope, fever, cough, leg swelling.',
+    exam: {
+      general: 'Diaphoretic, anxious, in visible discomfort',
+      vitals: 'See triage strip',
+      cardiac: 'RRR. S1S2 normal. No murmur. Peripheral pulses 2+ bilaterally.',
+      pulmonary: 'CTA bilaterally. No wheezing or crackles.',
+      abdomen: 'Soft, non-tender, non-distended',
+      extremities: 'No peripheral edema. Warm and well-perfused.'
+    },
+    labs: [
+      { name: 'Troponin', val: '0.84 ng/mL', flag: 'abnormal' },
+      { name: 'BNP', val: '88 pg/mL', flag: 'normal' },
+      { name: 'WBC', val: '11.4 K', flag: 'normal' },
+      { name: 'Hgb', val: '14.2 g/dL', flag: 'normal' },
+      { name: 'Creatinine', val: '1.1 mg/dL', flag: 'normal' },
+      { name: 'Glucose', val: '218 mg/dL', flag: 'abnormal' },
+      { name: 'INR', val: '1.0', flag: 'normal' },
+      { name: 'K+', val: '4.2 mEq/L', flag: 'normal' },
+      { name: 'Lactate', val: '1.8 mmol/L', flag: 'normal' },
+    ],
+    imaging: [
+      { name: 'EKG', val: '3mm ST elevations in II, III, aVF; reciprocal depression in I, aVL', flag: 'abnormal' },
+      { name: 'CXR', val: 'No acute cardiopulmonary process', flag: 'normal' },
+    ],
+    dx: 'Inferior STEMI — likely RCA occlusion'
+  },
+  {
+    id: 2,
+    emoji: '🦠',
+    category: 'Infectious / Critical Care',
+    title: 'Septic Shock',
+    hook: '72F nursing home resident, altered, febrile, and hypotensive',
+    difficulty: 'advanced',
+    triage: {
+      cc: 'Altered mental status, sent from nursing home',
+      vitals: 'BP 82/54  |  HR 118  |  RR 24  |  O₂ 91% RA  |  Temp 102.8°F  |  Alert → confused'
+    },
+    demographics: '72-year-old female',
+    hpi: 'Nursing home staff reports 2 days of productive cough and fever. Found this morning with increasing confusion — not at her baseline. Per staff, she has not been eating or drinking. No known trauma. No recent procedures.',
+    pmh: 'Hypertension, COPD (2L home O₂), type 2 diabetes, prior ischemic stroke with residual R-sided weakness, recurrent UTIs.',
+    medications: 'Amlodipine, metformin, tiotropium inhaler, aspirin, donepezil',
+    allergies: 'Sulfa (anaphylaxis)',
+    social: 'Nursing home resident x 2 years. Former smoker — quit 15 years ago. No alcohol.',
+    ros: 'Limited by altered mental status. Per staff: positive for cough (productive, yellow sputum), fever, decreased PO. Negative for vomiting, diarrhea, dysuria (per staff).',
+    exam: {
+      general: 'Lethargic, diaphoretic, not following commands consistently',
+      vitals: 'See triage strip',
+      cardiac: 'Tachycardic, regular rhythm. Dry mucous membranes.',
+      pulmonary: 'Decreased breath sounds and dullness to percussion at R base. Coarse crackles.',
+      abdomen: 'Soft, non-distended. Mild suprapubic tenderness on deep palpation.',
+      extremities: 'Cool, mottled lower extremities. Cap refill >3 seconds. 1+ pitting edema bilateral ankles.'
+    },
+    labs: [
+      { name: 'WBC', val: '21.8 K (bands 18%)', flag: 'abnormal' },
+      { name: 'Hgb', val: '10.2 g/dL', flag: 'abnormal' },
+      { name: 'Lactate', val: '4.6 mmol/L', flag: 'abnormal' },
+      { name: 'Creatinine', val: '2.4 mg/dL', flag: 'abnormal' },
+      { name: 'BUN', val: '48 mg/dL', flag: 'abnormal' },
+      { name: 'Glucose', val: '286 mg/dL', flag: 'abnormal' },
+      { name: 'Procalcitonin', val: '28.4 ng/mL', flag: 'abnormal' },
+      { name: 'UA', val: 'Nitrite+, WBC >50', flag: 'abnormal' },
+      { name: 'Bili (T)', val: '1.8 mg/dL', flag: 'abnormal' },
+    ],
+    imaging: [
+      { name: 'CXR', val: 'Dense R lower lobe consolidation consistent with pneumonia', flag: 'abnormal' },
+      { name: 'EKG', val: 'Sinus tachycardia at 118bpm. No acute ischemic changes.', flag: 'normal' },
+    ],
+    dx: 'Septic shock — likely pneumonia source (possible concurrent UTI)'
+  },
+  {
+    id: 3,
+    emoji: '🧠',
+    category: 'Neurology',
+    title: 'Acute Ischemic Stroke',
+    hook: '67M sudden onset left-sided weakness and slurred speech — last known well 40 min ago',
+    difficulty: 'intermediate',
+    triage: {
+      cc: 'Facial droop and left arm weakness, sudden onset',
+      vitals: 'BP 178/96  |  HR 88  |  RR 16  |  O₂ 99% RA  |  Temp 98.2°F  |  GCS 13'
+    },
+    demographics: '67-year-old male',
+    hpi: 'Patient was eating breakfast 40 minutes ago when wife noticed his face drooping on the left and his speech became slurred. He also developed left arm and leg weakness and could not hold his fork. Brought in by wife immediately. No head trauma. No seizure activity. Patient denies headache. Last known well 40 minutes ago.',
+    pmh: 'Atrial fibrillation (on anticoagulation), hypertension, hyperlipidemia. Prior TIA 2 years ago with full resolution.',
+    medications: 'Apixaban 5mg BID (last dose this morning), metoprolol, rosuvastatin, lisinopril',
+    allergies: 'NKDA',
+    social: 'Retired teacher. Lives with wife. Non-smoker. Occasional alcohol.',
+    ros: 'Positive: facial droop, left arm/leg weakness, dysarthria. Negative: headache, vision changes, ataxia, loss of consciousness, chest pain.',
+    exam: {
+      general: 'Alert, anxious, following some commands',
+      vitals: 'See triage strip',
+      neuro: 'Left facial droop (lower). Dysarthria. Left arm drift and weakness (3/5). Left leg weakness (4/5). Left-sided neglect.',
+      cardiac: 'Irregular rhythm. No murmur.',
+      pulmonary: 'CTA bilaterally',
+      abdomen: 'Soft, non-tender',
+      extremities: 'No edema. Right side full strength.'
+    },
+    labs: [
+      { name: 'Glucose', val: '124 mg/dL', flag: 'normal' },
+      { name: 'INR', val: '1.1', flag: 'normal' },
+      { name: 'Apixaban level', val: 'Pending', flag: 'normal' },
+      { name: 'CBC', val: 'WNL', flag: 'normal' },
+      { name: 'BMP', val: 'WNL', flag: 'normal' },
+      { name: 'Troponin', val: 'Pending', flag: 'normal' },
+    ],
+    imaging: [
+      { name: 'CT Head (non-con)', val: 'No hemorrhage, no obvious early ischemic changes. No mass effect.', flag: 'normal' },
+      { name: 'CTA Head/Neck', val: 'Occlusion of the right MCA M1 segment', flag: 'abnormal' },
+      { name: 'EKG', val: 'Atrial fibrillation with controlled ventricular response', flag: 'abnormal' },
+    ],
+    dx: 'Acute ischemic stroke — right MCA territory (LKW 40 min ago, within tPA window)'
+  },
+  {
+    id: 4,
+    emoji: '🫁',
+    category: 'Pulmonology',
+    title: 'Pulmonary Embolism',
+    hook: '44F post-op day 6, pleuritic chest pain, tachycardia, hypoxia',
+    difficulty: 'advanced',
+    triage: {
+      cc: 'Chest pain and shortness of breath',
+      vitals: 'BP 106/72  |  HR 126  |  RR 22  |  O₂ 90% RA → 95% on 4L NC  |  Pain 6/10'
+    },
+    demographics: '44-year-old female',
+    hpi: 'Post-op day 6 from an elective right knee arthroplasty. Reports sudden onset right-sided pleuritic chest pain and shortness of breath that started 2 hours ago at rest. Pain worsens with deep inspiration. She notes mild right calf pain and swelling for the past 2 days, which she attributed to surgery. No fever. No hemoptysis. Rates pain 6/10.',
+    pmh: 'Obesity (BMI 38), hypertension, recent right total knee replacement 6 days ago. No prior DVT or PE. On oral contraceptives.',
+    medications: 'Lisinopril, OCP (levonorgestrel/ethinyl estradiol), ASA 81mg post-op, celecoxib',
+    allergies: 'Contrast dye (hives — premedicate)',
+    social: 'Married, works in finance. Non-smoker. Social alcohol.',
+    ros: 'Positive: pleuritic chest pain, dyspnea, right calf pain and swelling. Negative: hemoptysis, syncope, fever, palpitations.',
+    exam: {
+      general: 'Anxious, tachypneic, diaphoretic',
+      vitals: 'See triage strip',
+      cardiac: 'Tachycardic, regular. S1S2. No murmur. JVD present.',
+      pulmonary: 'Diminished breath sounds at right base. No wheezing.',
+      abdomen: 'Soft, non-tender',
+      extremities: 'Right calf — erythema, warmth, +Homans sign, 2cm asymmetric circumference vs. left. Surgical site clean.'
+    },
+    labs: [
+      { name: 'D-dimer', val: '6,420 ng/mL', flag: 'abnormal' },
+      { name: 'Troponin', val: '0.21 ng/mL', flag: 'abnormal' },
+      { name: 'BNP', val: '420 pg/mL', flag: 'abnormal' },
+      { name: 'ABG pH', val: '7.48', flag: 'abnormal' },
+      { name: 'ABG PaO₂', val: '62 mmHg', flag: 'abnormal' },
+      { name: 'CBC', val: 'WNL', flag: 'normal' },
+      { name: 'BMP', val: 'WNL', flag: 'normal' },
+      { name: 'INR', val: '1.1', flag: 'normal' },
+    ],
+    imaging: [
+      { name: 'CTA Chest', val: 'Bilateral pulmonary emboli — right main + left lower lobe. RV:LV ratio 1.2 (RV strain).', flag: 'abnormal' },
+      { name: 'R/L US', val: 'Right proximal DVT confirmed — popliteal and femoral vein', flag: 'abnormal' },
+      { name: 'EKG', val: 'Sinus tachycardia. S1Q3T3 pattern. T-wave inversions V1-V4.', flag: 'abnormal' },
+    ],
+    dx: 'Submassive bilateral PE with RV strain (DVT confirmed); Virchow\'s triad: immobility, OCP, post-op'
+  },
+  {
+    id: 5,
+    emoji: '🩺',
+    category: 'Abdominal',
+    title: 'Acute Appendicitis',
+    hook: '22M with RLQ pain that started near the belly button and migrated',
+    difficulty: 'basic',
+    triage: {
+      cc: 'Right lower quadrant abdominal pain x 18 hours',
+      vitals: 'BP 124/78  |  HR 96  |  RR 16  |  O₂ 99% RA  |  Temp 100.8°F  |  Pain 7/10'
+    },
+    demographics: '22-year-old male',
+    hpi: 'Periumbilical pain that began 18 hours ago. Over the past 8 hours, pain has migrated to the right lower quadrant and worsened to 7/10. Associated with nausea and one episode of non-bloody vomiting. Poor appetite since yesterday. Denies diarrhea. The pain is constant, worsened by movement.',
+    pmh: 'None. No prior surgeries.',
+    medications: 'None',
+    allergies: 'NKDA',
+    social: 'College student. Non-smoker. Occasional alcohol on weekends. Sexually active with one partner (male).',
+    ros: 'Positive: RLQ pain (migrated from periumbilical), nausea, vomiting x1, anorexia, low-grade fever. Negative: diarrhea, dysuria, hematuria, testicular pain, hematochezia.',
+    exam: {
+      general: 'Uncomfortable, lying still, guarding abdomen',
+      vitals: 'See triage strip',
+      abdomen: 'RLQ maximal tenderness at McBurney\'s point. Voluntary guarding. + Rovsing\'s sign. + Psoas sign. No rigidity. No rebound. No palpable mass.',
+      cardiac: 'Regular. No murmur.',
+      pulmonary: 'CTA bilaterally.',
+      GU: 'No CVA tenderness. No inguinal adenopathy.',
+      extremities: 'Warm, no edema.'
+    },
+    labs: [
+      { name: 'WBC', val: '14.8 K', flag: 'abnormal' },
+      { name: 'Neutrophils', val: '88%', flag: 'abnormal' },
+      { name: 'CRP', val: '42 mg/L', flag: 'abnormal' },
+      { name: 'Lipase', val: '32 U/L', flag: 'normal' },
+      { name: 'BMP', val: 'WNL', flag: 'normal' },
+      { name: 'UA', val: 'Negative', flag: 'normal' },
+      { name: 'Urine hCG', val: 'N/A', flag: 'normal' },
+    ],
+    imaging: [
+      { name: 'CT Abd/Pelvis (contrast)', val: 'Distended appendix 10mm diameter, periappendiceal fat stranding, no free air, no perforation', flag: 'abnormal' },
+      { name: 'R/L US (initial)', val: 'Limited study — bowel gas. Non-compressible structure in RLQ 9mm.', flag: 'abnormal' },
+    ],
+    dx: 'Acute appendicitis (uncomplicated, non-perforated)'
+  },
+  {
+    id: 6,
+    emoji: '🩸',
+    category: 'Endocrine / Metabolic',
+    title: 'Diabetic Ketoacidosis',
+    hook: '19F with T1DM, nausea, Kussmaul respirations, glucose 524',
+    difficulty: 'intermediate',
+    triage: {
+      cc: 'Nausea, vomiting, abdominal pain x 2 days',
+      vitals: 'BP 96/62  |  HR 122  |  RR 28 (deep)  |  O₂ 98% RA  |  Temp 99.4°F  |  Glucose 524'
+    },
+    demographics: '19-year-old female',
+    hpi: 'Two days of progressive nausea, vomiting (3–4x/day, non-bloody), and diffuse abdominal pain. She ran out of insulin 3 days ago and has not taken it since. Polyuria and polydipsia for 4 days. Noticed "fruity" breath yesterday. No fever, no chest pain. She has had DKA twice before, both hospitalized.',
+    pmh: 'Type 1 diabetes mellitus (dx age 12). No other conditions.',
+    medications: 'Insulin glargine 20 units QHS, insulin lispro (sliding scale) — not taken in 3 days',
+    allergies: 'NKDA',
+    social: 'College freshman. Lives in dorms. Non-smoker. No alcohol. No illicit drugs. No sexual activity currently.',
+    ros: 'Positive: nausea, vomiting, abdominal pain, polyuria, polydipsia, fruity breath, fatigue. Negative: chest pain, fever, diarrhea, dysuria, headache.',
+    exam: {
+      general: 'Ill-appearing, tachypneic with deep Kussmaul respirations. Fruity odor on breath. Dry mucous membranes.',
+      vitals: 'See triage strip',
+      cardiac: 'Tachycardic, regular. No murmur.',
+      pulmonary: 'CTA bilaterally. Deep, rapid breathing (Kussmaul).',
+      abdomen: 'Diffusely tender but soft. No rigidity. No rebound.',
+      skin: 'Dry, decreased skin turgor.',
+      neuro: 'Alert and oriented x4. No focal deficits.'
+    },
+    labs: [
+      { name: 'Glucose', val: '524 mg/dL', flag: 'abnormal' },
+      { name: 'Bicarb', val: '8 mEq/L', flag: 'abnormal' },
+      { name: 'Anion Gap', val: '28', flag: 'abnormal' },
+      { name: 'pH', val: '7.12', flag: 'abnormal' },
+      { name: 'Beta-OH-Butyrate', val: '5.8 mmol/L', flag: 'abnormal' },
+      { name: 'Potassium', val: '5.8 mEq/L', flag: 'abnormal' },
+      { name: 'Sodium', val: '128 mEq/L (corrected 136)', flag: 'abnormal' },
+      { name: 'Creatinine', val: '1.4 mg/dL', flag: 'abnormal' },
+      { name: 'UA', val: 'Ketones 4+, glucose 4+', flag: 'abnormal' },
+    ],
+    imaging: [
+      { name: 'EKG', val: 'Sinus tachycardia. Peaked T-waves V2-V4 (hyperkalemia pattern).', flag: 'abnormal' },
+      { name: 'CXR', val: 'No acute cardiopulmonary process', flag: 'normal' },
+    ],
+    dx: 'Severe DKA (pH <7.2, AG 28) — insulin non-adherence precipitant'
+  },
+  {
+    id: 7,
+    emoji: '💀',
+    category: 'Neurology / Vascular',
+    title: 'Hypertensive Emergency',
+    hook: '55M with the worst headache of his life and BP 212/124',
+    difficulty: 'advanced',
+    triage: {
+      cc: 'Worst headache of my life — thunderclap onset',
+      vitals: 'BP 212/124  |  HR 84  |  RR 16  |  O₂ 99% RA  |  Temp 98.6°F  |  Pain 10/10'
+    },
+    demographics: '55-year-old male',
+    hpi: 'Patient describes a thunderclap headache — worst in his life — that began suddenly 90 minutes ago while lifting at the gym. Rated 10/10. Bilateral, occipital with radiation to the neck. Associated with nausea and one episode of vomiting. Photophobia and phonophobia. No loss of consciousness. No focal weakness. No prior headaches of this severity.',
+    pmh: 'Hypertension (poorly controlled, not on medication for 2 years), no prior stroke or aneurysm',
+    medications: 'Previously on lisinopril — stopped 2 years ago. No current medications.',
+    allergies: 'NKDA',
+    social: 'Works in construction. Smokes 1 PPD x 20 years. Drinks 4–6 beers on weekends. No illicit drugs.',
+    ros: 'Positive: sudden severe headache, nausea, vomiting, photophobia, phonophobia, neck stiffness. Negative: focal weakness, vision changes, seizure, loss of consciousness, fever.',
+    exam: {
+      general: 'In significant distress. Prefers room dark and quiet.',
+      vitals: 'See triage strip',
+      neuro: 'Alert and oriented x4. Cranial nerves intact. Motor 5/5 all extremities. Sensation intact. No papilledema on fundoscopic exam.',
+      cardiac: 'Regular rate and rhythm. No murmur.',
+      meningeal: '+Nuchal rigidity. Negative Kernig\'s and Brudzinski\'s.',
+      pulmonary: 'CTA bilaterally',
+      extremities: 'No edema.'
+    },
+    labs: [
+      { name: 'CBC', val: 'WNL', flag: 'normal' },
+      { name: 'BMP', val: 'Cr 1.3 (slightly elevated)', flag: 'abnormal' },
+      { name: 'Coags', val: 'Normal', flag: 'normal' },
+      { name: 'UA', val: '2+ protein, 1+ RBC', flag: 'abnormal' },
+    ],
+    imaging: [
+      { name: 'CT Head (non-con)', val: 'Hyperdensity in basal cisterns and sylvian fissures — consistent with subarachnoid hemorrhage', flag: 'abnormal' },
+      { name: 'CTA Head', val: 'Ordered — pending', flag: 'normal' },
+      { name: 'LP (if CT -)', val: 'Xanthochromia present if SAH (would order if CT negative)', flag: 'abnormal' },
+    ],
+    dx: 'Subarachnoid hemorrhage (thunderclap headache + CT findings) — likely aneurysmal; BP emergency'
+  },
+  {
+    id: 8,
+    emoji: '🐝',
+    category: 'Allergy / Immunology',
+    title: 'Anaphylaxis',
+    hook: '28F bee sting 20 min ago — urticaria, stridor, and BP dropping',
+    difficulty: 'basic',
+    triage: {
+      cc: 'Bee sting — difficulty breathing and hives',
+      vitals: 'BP 88/54  |  HR 138  |  RR 26  |  O₂ 92% RA  |  Temp 98.4°F'
+    },
+    demographics: '28-year-old female',
+    hpi: 'Stung by a bee in the garden 20 minutes ago. Within minutes developed diffuse urticaria and pruritus. Then noticed throat tightness and difficulty breathing. Felt lightheaded and nearly passed out walking to the car. Brought in by husband. No known bee sting allergy, but had a "mild reaction" to a bee sting 3 years ago (hives only). No epinephrine auto-injector available.',
+    pmh: 'Mild intermittent asthma (albuterol PRN, rarely uses it). No prior anaphylaxis.',
+    medications: 'Albuterol inhaler PRN',
+    allergies: 'Bee sting — prior mild reaction (hives). No known drug allergies.',
+    social: 'Married, nurse. Non-smoker. Social alcohol. No illicit drugs.',
+    ros: 'Positive: urticaria, pruritus, throat tightness, stridor, dyspnea, lightheadedness. Negative: chest pain, fever, abdominal pain, vomiting.',
+    exam: {
+      general: 'Anxious, audible stridor, diffuse urticaria on trunk and extremities, angioedema of lips and tongue',
+      vitals: 'See triage strip',
+      airway: 'Angioedema of lips, tongue, and uvula. Stridor audible. Voice hoarse.',
+      cardiac: 'Tachycardic. BP 88/54.',
+      pulmonary: 'Bilateral expiratory wheezing. Decreased air entry.',
+      skin: 'Diffuse urticarial rash, flushing, angioedema',
+      extremities: 'Warm, flushed. Bee sting visible on right forearm.'
+    },
+    labs: [
+      { name: 'Tryptase', val: 'Pending (send stat)', flag: 'abnormal' },
+      { name: 'CBC', val: 'WNL', flag: 'normal' },
+      { name: 'BMP', val: 'WNL', flag: 'normal' },
+    ],
+    imaging: [
+      { name: 'EKG', val: 'Sinus tachycardia at 138bpm. No ischemic changes.', flag: 'normal' },
+      { name: 'CXR', val: 'Hyperinflation. No focal consolidation.', flag: 'normal' },
+    ],
+    dx: 'Anaphylaxis — bee venom IgE-mediated; airway compromise + distributive shock'
+  },
+  {
+    id: 9,
+    emoji: '🦠',
+    category: 'Infectious Disease',
+    title: 'Strep Pharyngitis',
+    hook: '26F with sore throat, fever, tonsillar exudates — rapid strep positive',
+    difficulty: 'basic',
+    triage: {
+      cc: 'Sore throat x 3 days',
+      vitals: 'BP 118/74  |  HR 88  |  RR 16  |  O₂ 99% RA  |  Temp 101.4°F  |  Pain 7/10'
+    },
+    demographics: '26-year-old female',
+    hpi: 'Three days of progressively worsening sore throat, rated 7/10. Significant odynophagia. Low-grade fever at home up to 101.4°F. No cough. Roommate had a similar illness last week. No prior strep infections. Denies hoarseness, drooling, or difficulty breathing.',
+    pmh: 'None.',
+    medications: 'OCP (ethinyl estradiol/norgestimate), ibuprofen PRN',
+    allergies: 'NKDA',
+    social: 'Graduate student. Non-smoker. Social alcohol. Lives with one roommate.',
+    ros: 'Positive: sore throat, odynophagia, fever, malaise. Negative: cough, rhinorrhea, hoarseness, neck stiffness, drooling, rash, ear pain.',
+    exam: {
+      general: 'Uncomfortable but non-toxic appearing. Speaking in full sentences.',
+      vitals: 'See triage strip',
+      HEENT: 'Posterior pharynx erythematous with bilateral tonsillar exudates. Uvula midline. No peritonsillar bulging or asymmetry.',
+      neck: 'Tender anterior cervical lymphadenopathy bilaterally. No posterior cervical nodes. Supple.',
+      lungs: 'CTA bilaterally. No stridor.',
+      skin: 'No rash. No palatal petechiae.'
+    },
+    labs: [
+      { name: 'Rapid Strep', val: 'POSITIVE', flag: 'abnormal' },
+      { name: 'Monospot', val: 'Negative', flag: 'normal' },
+      { name: 'WBC', val: '13.2 K', flag: 'abnormal' },
+      { name: 'Lymphocytes', val: '44% (normal differential)', flag: 'normal' },
+      { name: 'Temp', val: '101.4°F', flag: 'abnormal' },
+    ],
+    imaging: [
+      { name: 'Centor Score', val: '4/4: exudates + fever + no cough + tender ant. cervical nodes', flag: 'abnormal' },
+      { name: 'Soft Tissue Neck X-ray', val: 'Not obtained — no concern for abscess or epiglottitis', flag: 'normal' },
+    ],
+    dx: 'Streptococcal pharyngitis (Group A Strep) — Centor 4, rapid strep positive'
+  },
+  {
+    id: 10,
+    emoji: '🦶',
+    category: 'Orthopedics / MSK',
+    title: 'Lateral Ankle Sprain',
+    hook: '21M twisted ankle playing basketball — lateral swelling, Ottawa rules negative',
+    difficulty: 'basic',
+    triage: {
+      cc: 'Right ankle pain after twisting injury, 2 hours ago',
+      vitals: 'BP 126/78  |  HR 76  |  RR 14  |  O₂ 99% RA  |  Temp 98.4°F  |  Pain 6/10'
+    },
+    demographics: '21-year-old male',
+    hpi: 'Inversion injury to the right ankle while playing pickup basketball 2 hours ago. Immediate lateral ankle pain and swelling. Was able to bear weight immediately after but with significant pain and a limp. No audible pop. No prior ankle injuries. No knee or foot pain.',
+    pmh: 'None. No prior ankle injuries.',
+    medications: 'None',
+    allergies: 'NKDA',
+    social: 'College student. Non-smoker. Recreational athlete. No alcohol.',
+    ros: 'Positive: right ankle pain, swelling, developing ecchymosis. Negative: knee pain, foot pain, numbness, back pain, hip pain.',
+    exam: {
+      general: 'Well-appearing male, ambulatory with antalgic gait favoring right leg',
+      vitals: 'See triage strip',
+      rightAnkle: 'Moderate swelling and early ecchymosis over lateral ankle. Tenderness over ATFL and CFL. No tenderness over posterior tip of fibula or medial malleolus. No tenderness over navicular or 5th metatarsal base.',
+      special: 'Positive anterior drawer test (ATFL laxity). Negative talar tilt. Negative squeeze test.',
+      neurovascular: 'Sensation intact in foot. Dorsalis pedis and posterior tibial pulses 2+. Capillary refill <2 sec.'
+    },
+    labs: [
+      { name: 'Ottawa Rules', val: 'NEGATIVE — no bony point tenderness at posterior malleoli', flag: 'normal' },
+    ],
+    imaging: [
+      { name: 'X-ray Ankle (3 views)', val: 'No fracture or dislocation. Soft tissue swelling over lateral ankle.', flag: 'normal' },
+    ],
+    dx: 'Grade II lateral ankle sprain (ATFL + CFL involvement) — no fracture'
+  },
+  {
+    id: 11,
+    emoji: '🤕',
+    category: 'Neurology',
+    title: 'Migraine Headache',
+    hook: '31F known migraineur, typical severe unilateral throbbing headache with nausea and photophobia',
+    difficulty: 'basic',
+    triage: {
+      cc: 'Severe headache x 6 hours — known migraineur',
+      vitals: 'BP 124/78  |  HR 82  |  RR 14  |  O₂ 99% RA  |  Temp 98.6°F  |  Pain 9/10'
+    },
+    demographics: '31-year-old female',
+    hpi: 'Known migraineur with approximately 2 migraines per month for 5 years. Gradual onset left-sided throbbing headache 6 hours ago, now 9/10. She describes it as her typical migraine. Associated with nausea, photophobia, and phonophobia. Tried ibuprofen at home without significant relief. Ran out of sumatriptan. No aura. No fever, no neck stiffness, no vision changes, no focal weakness. Under significant work stress recently.',
+    pmh: 'Migraine without aura (diagnosed age 24). No other conditions.',
+    medications: 'Sumatriptan 100mg PRN (out of supply), OCP',
+    allergies: 'NKDA',
+    social: 'Accountant. Non-smoker. Minimal alcohol. Significant occupational stress.',
+    ros: 'Positive: unilateral headache (left), throbbing, nausea, photophobia, phonophobia. Negative: fever, neck stiffness, vision changes, diplopia, focal weakness, thunderclap onset, vomiting, loss of consciousness, rash.',
+    exam: {
+      general: 'Uncomfortable, lying still with eyes closed. Prefers dim lighting.',
+      vitals: 'See triage strip',
+      neuro: 'Alert and oriented x4. Cranial nerves II–XII intact. Motor 5/5 all extremities. No pronator drift. Sensation intact.',
+      meningeal: 'No nuchal rigidity. Kernig\'s and Brudzinski\'s negative.',
+      fundoscopic: 'No papilledema.',
+      HEENT: 'Photophobia present. No sinus tenderness. No temporal artery tenderness.'
+    },
+    labs: [
+      { name: 'CT Head', val: 'Not obtained — no red flags, typical presentation', flag: 'normal' },
+      { name: 'Glucose', val: '94 mg/dL', flag: 'normal' },
+      { name: 'BMP', val: 'WNL', flag: 'normal' },
+    ],
+    imaging: [
+      { name: 'CT Head (if ordered)', val: 'No acute intracranial abnormality (not indicated here)', flag: 'normal' },
+    ],
+    dx: 'Migraine without aura — typical presentation, no secondary headache red flags'
+  },
+];
+
+/* ── STATE ──────────────────────────────────────────────────── */
+let currentCase = null;
+let modelAnswerVisible = false;
+let pendingResult = null;
+
+/* ── INIT ────────────────────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  renderCaseGrid();
+});
+
+/* ── LANDING ─────────────────────────────────────────────────── */
+function enterApp() {
+  document.getElementById('landing').classList.add('hidden');
+}
+
+function goToLanding() {
+  goBack();
+  document.getElementById('landing').classList.remove('hidden');
+}
+
+/* ── CASE GRID ───────────────────────────────────────────────── */
+function renderCaseGrid() {
+  const grid = document.getElementById('case-grid');
+  grid.innerHTML = CASES.map(c => `
+    <div class="case-card" onclick="selectCase(${c.id})">
+      <div class="case-card-top">
+        <div class="case-emoji">${c.emoji}</div>
+        <div class="case-meta">
+          <div class="case-cat">${c.demographics}</div>
+          <div class="case-card-title">${c.triage.cc}</div>
+        </div>
+      </div>
+      <div class="case-card-hook">${c.triage.vitals}</div>
+      <div class="diff-pill diff-${c.difficulty}">${c.difficulty}</div>
+    </div>
+  `).join('');
+}
+
+/* ── WORKSPACE VIEW (input | questions | results) ────────────── */
+function showWorkspace(view) {
+  document.getElementById('presentation-area').style.display = view === 'input' ? 'flex' : 'none';
+  document.getElementById('attending-panel').classList.toggle('visible', view === 'questions');
+  document.getElementById('results-panel').classList.toggle('visible', view === 'results');
+  document.getElementById('input-panel').scrollTop = 0;
+}
+
+/* ── SELECT CASE ─────────────────────────────────────────────── */
+function selectCase(id) {
+  currentCase = CASES.find(c => c.id === id);
+  if (!currentCase) return;
+
+  document.getElementById('case-select-view').classList.add('hidden');
+  document.getElementById('case-detail-view').classList.add('visible');
+  document.getElementById('case-detail-content').innerHTML = renderCaseDetail(currentCase);
+
+  document.querySelector('.main').classList.remove('select-mode');
+  showWorkspace('input');
+  pendingResult = null;
+
+  document.getElementById('case-panel').scrollTop = 0;
+  document.getElementById('presentation-input').value = '';
+  updateWordCount();
+}
+
+/* ── RENDER CASE DETAIL ──────────────────────────────────────── */
+function renderCaseDetail(c) {
+  const labRows = c.labs.map(l =>
+    `<div class="lab-item"><div class="lab-name">${l.name}</div><div class="lab-val ${l.flag}">${l.val}</div></div>`
+  ).join('');
+
+  const imgRows = c.imaging.map(i =>
+    `<div class="exam-item"><div class="exam-item-label">${i.name}</div><div class="exam-item-val" style="color:${i.flag === 'abnormal' ? '#f87171' : '#94a3b8'}">${i.val}</div></div>`
+  ).join('');
+
+  return `
+    <div class="case-detail-header">
+      <div class="case-detail-title">${c.emoji} ${c.triage.cc}</div>
+      <div class="case-chips">
+        <div class="chip">${c.demographics}</div>
+        <div class="chip diff-${c.difficulty}" style="background:transparent; border:none;">${c.difficulty.charAt(0).toUpperCase()+c.difficulty.slice(1)}</div>
+      </div>
+    </div>
+
+    <div class="triage-strip">
+      <div class="triage-label">Triage</div>
+      <div class="triage-cc">${c.triage.cc}</div>
+      <div class="triage-vitals">${c.triage.vitals}</div>
+    </div>
+
+    <div class="clinical-section">
+      <div class="clin-label">Demographics & HPI</div>
+      <div class="clin-body"><strong>${c.demographics}</strong><br>${c.hpi}</div>
+    </div>
+
+    <div class="clinical-section">
+      <div class="clin-label">Past Medical History</div>
+      <div class="clin-body">${c.pmh}</div>
+    </div>
+
+    <div class="clinical-section">
+      <div class="clin-label">Medications · Allergies · Social</div>
+      <div class="clin-body">
+        <strong>Meds:</strong> ${c.medications}<br>
+        <strong>Allergies:</strong> ${c.allergies}<br>
+        <strong>Social:</strong> ${c.social}
+      </div>
+    </div>
+
+    <div class="clinical-section">
+      <div class="clin-label">Review of Systems</div>
+      <div class="clin-body">${c.ros}</div>
+    </div>
+
+    <div class="clinical-section">
+      <div class="clin-label">Physical Exam</div>
+      <div class="exam-grid">
+        ${Object.entries(c.exam).map(([k, v]) =>
+          `<div class="exam-item"><div class="exam-item-label">${k}</div><div class="exam-item-val">${v}</div></div>`
+        ).join('')}
+      </div>
+    </div>
+
+    <div class="clinical-section">
+      <div class="clin-label">Labs</div>
+      <div class="lab-grid">${labRows}</div>
+    </div>
+
+    <div class="clinical-section">
+      <div class="clin-label">Imaging & EKG</div>
+      <div class="exam-grid">${imgRows}</div>
+    </div>
+  `;
+}
+
+/* ── WORD COUNT ──────────────────────────────────────────────── */
+function updateWordCount() {
+  const text = document.getElementById('presentation-input').value.trim();
+  const words = text ? text.split(/\s+/).length : 0;
+  const mins = Math.floor(words / 130);
+  const secs = Math.round((words / 130 - mins) * 60);
+  const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+  const el = document.getElementById('word-count');
+  el.textContent = words;
+  el.className = 'wc-num ' + (words < 100 ? 'short' : words > 600 ? 'long' : 'good');
+
+  document.getElementById('time-est').textContent = timeStr;
+  document.getElementById('wc-hint').textContent =
+    words < 100 ? 'Too short — aim for 260–520 words' :
+    words > 600 ? 'Getting long — trim for conciseness' :
+    'Good length ✓';
+
+  document.getElementById('submit-btn').disabled = words < 50;
+}
+
+/* ── SUBMIT ──────────────────────────────────────────────────── */
+function submitPresentation() {
+  const presentation = document.getElementById('presentation-input').value.trim();
+  if (!presentation || !currentCase) return;
+  if (isRecording) stopDictation();
+
+  try {
+    const result = scoreLocally(presentation, currentCase);
+    if (result.attendingQuestions && result.attendingQuestions.length > 0) {
+      showAttendingQuestions(result);
+    } else {
+      displayResults(result);
+    }
+  } catch (err) {
+    console.error('Scoring error:', err);
+    alert('Scoring error: ' + err.message);
+  }
+}
+
+/* ── LOCAL SCORING ENGINE ────────────────────────────────────── */
+
+// Per-case keyword rubrics and model presentations
+const SCORING = {
+  1: { // Inferior STEMI
+    oneliner:   { age:['58','fifty-eight'], sex:['male','man','gentleman','mr.'], cc:['chest pain','chest pressure','substernal'], pmh:['hypertension','htn','diabetes','dm','pci','stent','hyperlipid','cholesterol'] },
+    hpi:        { onset:['45 min','rest','watching tv','at rest','sudden'], quality:['substernal','pressure','crushing','squeezing','tight'], severity:['8/10','8 out of 10','severe','significant'], radiation:['radiates','radiation','left arm','arm','jaw','neck'], associated:['diaphor','nausea','sweat'], modifying:['no relief','position','not relieved'], negatives:['deny','denies','no shortness','no syncope','no palpitation','no dyspnea'] },
+    history:    { pmh:['hypertension','htn','hyperlipidemia','diabetes','dm','pci','stent','prior pci'], meds:['metformin','atorvastatin','lisinopril','aspirin','statin'], allergies:['penicillin','pcn','allerg'], social:['smok','tobacco','truck driver','pack year'] },
+    exam:       { vitals:['bp','blood pressure','148','heart rate','hr','102','o2','sat','97'], general:['diaphoretic','anxious','distress','uncomfortable'], cardiac:['regular','rhythm','rrr','murmur','s1','s2','no murmur'], pulmonary:['clear','cta','bilateral','lungs','no wheez'], negatives:['no edema','no crackle','no rales','no jvd'] },
+    workup:     { ekg:['ekg','ecg','electrocardiogram'], stfindings:['st elevation','stemi','inferior lead','ii, iii','avf','reciprocal','inferior elevation'], labs:['troponin','cardiac enzyme'], imaging:['cxr','chest x-ray','chest xray','chest radiograph'], results:['elevated','0.8','0.84','st elevation','inferior'] },
+    assessment: { primary:['stemi','st elevation myocardial','inferior mi','inferior stemi','myocardial infarction','acs'], differential:['differential','acs','unstable angina','dissection','pe','pericarditis','nstemi'] },
+    plan:       { treatment:['aspirin','heparin','anticoagul','p2y12','plavix','clopidogrel','ticagrelor'], consult:['cardiology','cath lab','pci','cardiac catheterization','interventional'], dispo:['admit','ccu','icu','activation','cath'] },
+    cantmiss:   { 'aortic dissection':['dissection','aortic'], 'pulmonary embolism':['pulmonary embol',' pe ',' pe.',' pe,'], 'pericarditis / tamponade':['pericarditis','tamponade'], 'pneumothorax':['pneumothorax'] },
+    critical:   ['aspirin','heparin','cath','pci','cardiology'],
+    model: `This is a 58-year-old male with hypertension, hyperlipidemia, type 2 diabetes, and prior PCI to the RCA four years ago presenting with 45 minutes of substernal chest pressure.\n\nThe pressure is 8/10, onset at rest while watching TV, radiating to the left arm and jaw. He is diaphoretic and nauseated. No relief with position change. He denies dyspnea, syncope, and palpitations. He's an active smoker — 30 pack-years. Current medications include metformin, atorvastatin, lisinopril, and aspirin 81mg. Penicillin allergy — rash.\n\nOn exam he is diaphoretic and anxious. Vitals: BP 148/92, HR 102, RR 18, O2 97% on room air. Cardiac exam: regular rate and rhythm, S1S2 normal, no murmur, pulses intact. Lungs clear to auscultation bilaterally. No peripheral edema.\n\nEKG shows 3mm ST elevations in leads II, III, and aVF with reciprocal ST depression in I and aVL — consistent with an inferior STEMI. Troponin is elevated at 0.84. CXR shows no acute cardiopulmonary process.\n\nMy assessment is an inferior STEMI, likely RCA occlusion. Differential includes NSTEMI, aortic dissection, and pericarditis — but the EKG pattern is classic for inferior MI.\n\nMy plan: I've given aspirin 325mg and am starting IV heparin now. I'm activating the cath lab and calling cardiology for emergent PCI. He'll be admitted to the CCU post-procedure on continuous monitoring. Low threshold to intubate if he decompensates hemodynamically.`
+  },
+  2: { // Septic Shock
+    oneliner:   { age:['72','seventy-two'], sex:['female','woman','lady','ms.'], cc:['altered','confusion','change in mental','ams'], pmh:['hypertension','copd','diabetes','stroke','uti','nursing home'] },
+    hpi:        { onset:['2 day','two day','this morning','48 hour'], source:['cough','productive','sputum','yellow'], ams:['confused','not at baseline','altered','lethargic'], po:['not eating','not drinking','decreased po','poor intake'], fever:['fever','febrile','temp','temperature'] },
+    history:    { pmh:['hypertension','copd','diabetes','stroke','uti','nursing home'], meds:['amlodipine','metformin','tiotropium','aspirin','donepezil'], allergies:['sulfa','allerg'], social:['nursing home','former smok','smok'] },
+    exam:       { vitals:['bp','82','heart rate','118','rr','24','o2','91','temp','102'], general:['lethargic','diaphoretic','not following','altered'], pulmonary:['decreased breath','dullness','crackles','consolidat','r base','right base'], peripheral:['cool','mottled','cap refill','edema'], other:['dry mucous','tachycardic','suprapubic'] },
+    workup:     { labs:['wbc','lactate','creatinine','procalcitonin'], cultures:['blood culture','blood cx','urine culture'], ua:['urinalysis','ua','urine'], imaging:['cxr','chest x-ray','chest radiograph'], results:['lactate 4','wbc 21','consolidat','pneumonia','procalcitonin'] },
+    assessment: { primary:['septic shock','sepsis','septic','pneumonia','pneumonia source'], differential:['differential','uti','source','meningitis','bacteremia','endocarditis'] },
+    plan:       { bundle:['blood culture','antibiotic','abx','broad spectrum','ceftriaxone','piperacillin','vanc'], fluids:['iv fluid','30 ml','crystalloid','normal saline','lactated ringer'], pressors:['vasopressor','norepinephrine','levophed','dopamine','norepi'], dispo:['icu','admit','pressors','intubate'] },
+    cantmiss:   { 'meningitis / cns infection':['meningitis','encephalitis','cns infection'], 'stroke / intracranial process':['stroke','intracranial','head bleed','hemorrhage'], 'hypoglycemia':['hypoglycemia','glucose','blood sugar'], 'cardiogenic shock / acs':['cardiogenic','myocardial','acs'] },
+    critical:   ['blood culture','antibiotic','fluid','vasopressor','lactate'],
+    model: `This is a 72-year-old female nursing home resident with hypertension, COPD on 2L home O2, type 2 diabetes, prior stroke with right-sided weakness, and recurrent UTIs presenting with two days of productive cough, fever, and this morning found with acute confusion not at her baseline.\n\nPer nursing home staff she has had two days of yellow productive cough, fever, and decreased oral intake. Found lethargic and confused this morning — not at her baseline. No known trauma, no recent procedures. Limited history due to altered mental status. Current medications include amlodipine, metformin, tiotropium, aspirin, and donepezil. Sulfa allergy — anaphylaxis.\n\nOn exam she is lethargic, diaphoretic, not consistently following commands. Vitals: BP 82/54, HR 118, RR 24, O2 91% on room air, temp 102.8°F. Cardiac: tachycardic, regular, dry mucous membranes. Pulmonary: decreased breath sounds with dullness to percussion at the right base, coarse crackles. Abdomen: mild suprapubic tenderness. Extremities: cool, mottled, cap refill greater than 3 seconds.\n\nCXR shows a dense right lower lobe consolidation. WBC is 21,800 with 18% bands, lactate is 4.6, creatinine 2.4 — elevated from baseline, procalcitonin 28. Urinalysis positive for nitrites and WBCs over 50.\n\nMy assessment is septic shock with pneumonia as the primary source. Concurrent UTI cannot be excluded. This is complicated by underlying COPD, diabetes, and her baseline functional status.\n\nMy plan is the hour-1 sepsis bundle: blood cultures times two drawn now before antibiotics, broad-spectrum antibiotics — vancomycin plus piperacillin-tazobactam given her sulfa allergy, and 30mL/kg IV crystalloid bolus. I'm placing a second large-bore IV. Given persistent hypotension I'm planning to start norepinephrine. Repeat lactate in 2 hours. ICU admission. Low threshold to intubate given her altered mental status and respiratory status.`
+  },
+  3: { // Stroke
+    oneliner:   { age:['67','sixty-seven'], sex:['male','man','gentleman','mr.'], cc:['facial droop','arm weakness','weakness','speech','slurred'], pmh:['atrial fibrillation','afib','af','anticoagul','apixaban','tia','hypertension'] },
+    hpi:        { onset:['40 min','forty min','breakfast','sudden','abrupt','acute onset'], lkw:['last known well','lkw','last seen normal','40 minutes ago'], symptoms:['facial droop','arm weakness','left arm','leg weakness','slurred speech','dysarthria'], negative:['no headache','no seizure','no loss of consciousness','deny headache'] },
+    history:    { pmh:['atrial fibrillation','afib','hypertension','htn','hyperlipidemia','tia','prior tia'], meds:['apixaban','metoprolol','rosuvastatin','lisinopril','anticoagul'], allergies:['nkda','no known','allerg'], social:['retired','non-smok','alcohol'] },
+    exam:       { vitals:['bp','178','heart rate','88','o2','99'], neuro:['facial droop','dysarthria','arm drift','left arm weakness','left leg','neglect','gcs','3/5','4/5'], cardiac:['irregular','atrial fibrillation','afib'], other:['right side','full strength','cranial nerve'] },
+    workup:     { ct:['ct head','non-contrast','no hemorrhage','no bleed'], cta:['cta','ct angiogram','mca','occlusion'], labs:['glucose','inr','coag','cbc','bmp'], ekg:['ekg','ecg','atrial fibrillation'] },
+    assessment: { primary:['ischemic stroke','stroke','mca','middle cerebral','cva','cerebrovascular'], differential:['differential','hemorrhagic','bleed','tia','hypoglycemia','todd','metabolic','seizure'] },
+    plan:       { tpa:['tpa','alteplase','thrombolytic','tissue plasminogen','within window','2 hour','3 hour','4.5 hour'], thrombectomy:['thrombectomy','mechanical','cath','neurology','neurointervent'], dispo:['neurology','stroke','icu','admit','monitor'] },
+    cantmiss:   { 'intracranial hemorrhage':['hemorrhag','bleed','ich'], 'hypoglycemia':['hypoglycemia','glucose','blood sugar'], 'seizure / todd paralysis':['seizure','todd'] },
+    critical:   ['tpa','alteplase','thrombolytic','thrombectomy','neurology','window'],
+    model: `This is a 67-year-old male with atrial fibrillation on apixaban, hypertension, hyperlipidemia, and a prior TIA two years ago presenting with sudden-onset left-sided facial droop, left arm and leg weakness, and dysarthria — last known well 40 minutes ago.\n\nHis wife reports he was eating breakfast when she noticed left facial droop and slurred speech. He was unable to hold his fork due to left arm weakness. Brought in immediately. No headache, no seizure, no loss of consciousness. He took his apixaban this morning. Current medications include apixaban 5mg BID, metoprolol, rosuvastatin, and lisinopril. No known drug allergies.\n\nOn exam he is alert and anxious, following some commands. Vitals: BP 178/96, HR 88, RR 16, O2 99% on room air, GCS 13. Neurologic: left lower facial droop, dysarthria, left arm drift with 3/5 strength, left leg 4/5 strength, left-sided neglect on exam. Cardiac: irregular rhythm, no murmur. Right side full strength.\n\nNon-contrast CT head shows no hemorrhage and no early ischemic changes. CTA head and neck reveals right MCA M1 segment occlusion. EKG confirms atrial fibrillation. Glucose is 124.\n\nMy assessment is an acute ischemic right MCA stroke — cardioembolic source most likely given his known afib. Last known well is 40 minutes ago — well within the tPA and thrombectomy windows.\n\nMy plan: I'm calling neurology now for emergent evaluation and thrombectomy candidacy — this is a large vessel occlusion. Given his apixaban level is unknown and last dose was this morning, I'll hold tPA pending coagulation studies and neurology guidance. He's going directly to CT angio of the neurovasculature. ICU admit for close monitoring. Strict BP parameters per neurology. Anticoagulation held pending decision about reperfusion.`
+  },
+  4: { // PE
+    oneliner:   { age:['44','forty-four'], sex:['female','woman','lady','ms.'], cc:['chest pain','shortness of breath','dyspnea','pleuritic'], pmh:['post-op','knee','arthroplasty','surgery','obesity','ocp','oral contraceptive'] },
+    hpi:        { onset:['post-op day','6 days','2 hour','sudden onset'], quality:['pleuritic','worsens with breath','inspiration','sharp'], dvt:['calf pain','calf swelling','leg pain','right leg','dvt'], associated:['tachycardic','hypoxic','shortness of breath','dyspnea'], negative:['no hemoptysis','no fever','no chest trauma'] },
+    history:    { pmh:['obesity','hypertension','knee','arthroplasty','dvt','ocp','oral contraceptive','virchow'], meds:['lisinopril','ocp','aspirin','celecoxib'], allergies:['contrast','allerg','premedicate'], social:['non-smok','married'] },
+    exam:       { vitals:['bp','106','heart rate','126','rr','22','o2','90','91','92'], jvd:['jvd','jugular venous','elevated jvp'], pulmonary:['diminished','right base'], extremities:['calf','erythema','warm','homans','asymmetric','right leg','circumference'], cardiac:['tachycardic'] },
+    workup:     { ct:['cta chest','ct pulmonary angiogram','ctpa','ct angio'], ddimer:['d-dimer','dimer'], echo:['rv','right ventricular','right ventricle','rv strain','rv:lv'], us:['ultrasound','doppler','dvt','right leg us'], labs:['troponin','bnp','abg','lactate'] },
+    assessment: { primary:['pulmonary embolism','pe','submassive pe','bilateral pe','dvt'], differential:['differential','pneumonia','pneumothorax','aortic dissection','acs','pleuritis'] },
+    plan:       { anticoag:['heparin','anticoagul','apixaban','rivaroxaban','enoxaparin','therapeutic anticoag'], thrombolytic:['thrombolytic','tpa','alteplase','catheter-directed','catheter directed'], dispo:['admit','icu','cardiology','pulmonology','ir','intervention'] },
+    cantmiss:   { 'acs / myocardial infarction':['acs','myocardial','ischemi','coronary'], 'aortic dissection':['dissection'], 'pneumothorax':['pneumothorax'], 'pneumonia':['pneumonia'] },
+    critical:   ['heparin','anticoagul','cta','ct pulmonary'],
+    model: `This is a 44-year-old female with a history of obesity, hypertension, and status post right total knee arthroplasty 6 days ago, also on oral contraceptives, presenting with sudden onset right-sided pleuritic chest pain and shortness of breath for 2 hours.\n\nShe reports pain onset at rest, worsening with deep inspiration, rated 6/10. She notes right calf pain and swelling for 2 days she attributed to surgery. No hemoptysis, no fever. Current medications include lisinopril, OCP, aspirin 81mg post-op, and celecoxib. Contrast allergy — hives, premedicate. She is a non-smoker.\n\nOn exam she is anxious and tachypneic. Vitals: BP 106/72, HR 126, RR 22, O2 90% on room air improving to 95% on 4L nasal cannula. Cardiac: tachycardic, regular, JVD present, no murmur. Pulmonary: diminished breath sounds at right base. Right calf: erythema, warmth, positive Homans, 2cm circumference asymmetry versus left.\n\nCTA chest reveals bilateral pulmonary emboli — right main and left lower lobe — with RV:LV ratio of 1.2 consistent with right heart strain. Right lower extremity doppler confirms proximal DVT involving the popliteal and femoral veins. D-dimer is 6,420. Troponin 0.21 and BNP 420 — both elevated, confirming right heart strain. EKG shows sinus tachycardia with S1Q3T3 pattern.\n\nMy assessment is a submassive bilateral PE with RV strain and concurrent right-sided proximal DVT. She has classic Virchow's triad: immobility post-op, OCP use, and venous injury. Differential included pneumonia, pneumothorax, and pleuritis — but imaging is confirmatory.\n\nMy plan: anticoagulation with IV heparin now — starting with a weight-based bolus. Cardiology and pulmonology consult for consideration of catheter-directed thrombolysis given RV strain and borderline hemodynamics. ICU admission for close monitoring. Pre-medicate with steroids and Benadryl if she needs further IV contrast. Hold OCP indefinitely.`
+  },
+  5: { // Appendicitis
+    oneliner:   { age:['22','twenty-two'], sex:['male','man','gentleman','mr.'], cc:['abdominal pain','right lower','rlq','stomach'], pmh:['no pmh','no past','otherwise healthy','healthy'] },
+    hpi:        { onset:['18 hour','eighteen hour','periumbilical','belly button','started around the naval'], migration:['migrated','moved','moved to right lower','right lower quadrant'], quality:['constant','worsens with movement','sharp','ache'], associated:['nausea','vomiting','anorexia','poor appetite','not eating'], fever:['fever','febrile','temperature','100'] },
+    history:    { pmh:['no pmh','no past','no prior','no surgical','no medications','none','healthy'], meds:['no medication','none'], allergies:['nkda','no known','no allerg'], social:['college','non-smok','student'] },
+    exam:       { vitals:['bp','124','heart rate','96','temp','100.8','fever'], tenderness:['mcburney','right lower','rlq','maximal tenderness'], signs:['rovsing','psoas','rebound','guarding'], general:['lying still','guarding','distress','uncomfortable'] },
+    workup:     { ct:['ct abdomen','ct abd','computed tomography','ct scan'], us:['ultrasound','us abdomen','u/s'], labs:['wbc','wbc 14','crp','c-reactive','lipase'], ua:['urinalysis','ua'] },
+    assessment: { primary:['appendicitis','appendix','acute appendicitis'], differential:['differential','ectopic','ovarian','hernia','mesenteric lymph','crohn','colitis','testicular'] },
+    plan:       { surgery:['surgery','surgical','general surgery','appendectomy','consult','npo','iv fluid'], antibiotics:['antibiotic','abx','cefazolin','piperacillin'], dispo:['admit','or','operating room','surgery'] },
+    cantmiss:   { 'testicular torsion':['torsion','testicular'], 'incarcerated hernia':['hernia','incarcerat'], 'perforation / peritonitis':['perforat','peritonitis','free air'] },
+    critical:   ['surgery','appendectomy','general surgery','npo'],
+    model: `This is a 22-year-old otherwise healthy male with no significant past medical history presenting with 18 hours of abdominal pain, now localized to the right lower quadrant.\n\nPain started periumbilically and over the past 8 hours migrated to the right lower quadrant, now 7/10, constant, worsening with movement. Associated with nausea and one episode of vomiting. He's had no appetite since yesterday. Denies diarrhea, dysuria, hematuria. No prior surgeries. No medications, no allergies.\n\nOn exam he is uncomfortable and lying still. Vitals: BP 124/78, HR 96, RR 16, O2 99%, temp 100.8°F. Abdomen: maximal tenderness at McBurney's point with voluntary guarding. Positive Rovsing's sign. Positive psoas sign. No rigidity or rebound tenderness. No palpable mass. GU: no CVA tenderness.\n\nWBC is 14,800 with 88% neutrophils. CRP is elevated at 42. Lipase is normal at 32. Urinalysis is negative. CT abdomen and pelvis with contrast shows a distended appendix measuring 10mm in diameter with periappendiceal fat stranding — no perforation, no free air.\n\nMy assessment is acute appendicitis, uncomplicated and non-perforated. Differential included mesenteric lymphadenitis, inguinal hernia, and Meckel's diverticulum — but CT is diagnostic.\n\nMy plan: make him NPO now, IV fluids, IV access. I'm calling general surgery for emergent appendectomy. I'll give pre-operative antibiotics per surgery's preference. Pain management with IV ketorolac or morphine. Admit to surgery service.`
+  },
+  6: { // DKA
+    oneliner:   { age:['19','nineteen'], sex:['female','woman','young woman','girl','ms.'], cc:['nausea','vomiting','abdominal pain','dka','diabetic'], pmh:['type 1','t1dm','t1d','diabetes','insulin','diabetic'] },
+    hpi:        { insulin:['ran out of insulin','missed insulin','no insulin','not taking insulin','non-adherent','insulin non-adherence'], onset:['2 day','two day','48 hour'], symptoms:['nausea','vomiting','abdominal pain','polyuria','polydipsia','fruity breath','kussmaul'], glucose:['glucose','sugar','524','hyperglycemic','elevated blood sugar'] },
+    history:    { pmh:['type 1 diabetes','t1dm','prior dka','two prior','insulin'], meds:['glargine','lispro','insulin','lantus','humalog'], allergies:['nkda','no known','no allerg'], social:['college','dorm','non-smok','no alcohol'] },
+    exam:       { vitals:['bp','96','heart rate','122','rr','28','kussmaul','deep breath'], general:['ill-appearing','tachypneic','kussmaul','fruity','dry mucous','dehydrated'], abdomen:['diffusely tender','soft','tender'], other:['tachycardic','dry','decreased turgor'] },
+    workup:     { glucose:['glucose','524','hyperglycemia'], anion:['anion gap','28','ag 28','acidosis'], bicarb:['bicarb','8','bicarbonate','metabolic acidosis'], ketones:['ketone','beta-hydroxybutyrate','bhb','5.8'], labs:['potassium','sodium','corrected sodium','creatinine'], ekg:['ekg','ecg','peaked t','t wave','hyperkalemia'] },
+    assessment: { primary:['dka','diabetic ketoacidosis','severe dka'], differential:['differential','hhs','hyperosmolar','starvation ketosis','alcoholic','toxic alcohol'] },
+    plan:       { fluids:['iv fluid','normal saline','1 liter','fluid resuscitat'], insulin:['insulin drip','insulin infusion','regular insulin','iv insulin'], potassium:['potassium','replac','k replac','monitor potassium'], monitoring:['glucose every','repeat','close monitoring','q1 hour','q2 hour'], dispo:['icu','admit','endocrinology'] },
+    cantmiss:   { 'hhs':['hhs','hyperosmolar'], 'underlying infection / sepsis trigger':['sepsis','infection','precipitant','uti','pneumonia'], 'other anion-gap acidosis (toxic / alcoholic)':['toxic','ingestion','alcoholic ketoacidosis','salicylate','starvation'] },
+    critical:   ['iv fluid','insulin','potassium','anion gap','glucose'],
+    model: `This is a 19-year-old female with a history of type 1 diabetes mellitus presenting with two days of nausea, vomiting, and diffuse abdominal pain after running out of insulin 3 days ago.\n\nShe reports 4 days of polyuria and polydipsia, worsening nausea with 3-4 episodes of vomiting daily, diffuse abdominal pain, and fruity odor on her breath noted yesterday. No fever, no chest pain. She has had DKA twice before requiring hospitalization. Current medications: insulin glargine 20 units at night and insulin lispro sliding scale — none taken in 3 days. No known drug allergies.\n\nOn exam she is ill-appearing and tachypneic with deep Kussmaul respirations and a fruity odor to her breath. Dry mucous membranes. Vitals: BP 96/62, HR 122, RR 28 deep and regular, O2 98% on room air. Glucose on arrival: 524. Abdomen: diffusely tender but soft, no rigidity.\n\nLabs confirm severe DKA: glucose 524, bicarbonate 8, anion gap 28, pH 7.12, beta-hydroxybutyrate 5.8. Potassium is 5.8 — elevated but will drop with insulin. Corrected sodium 136. Creatinine 1.4 — mildly elevated from dehydration. UA with 4+ glucose and 4+ ketones. EKG shows peaked T-waves — hyperkalemia pattern.\n\nMy assessment is severe DKA precipitated by insulin non-adherence. Differential included HHS and alcoholic ketoacidosis — but clinical picture and labs are classic for DKA.\n\nMy plan: IV fluid resuscitation starting with 1 liter normal saline now. Hold insulin until potassium is confirmed above 3.5 — current level is 5.8 so I will start insulin drip at 0.1 units/kg/hour once fluids are running. Potassium repletion will be ongoing as insulin drives potassium intracellularly — I'll monitor Q1-2 hours. Repeat BMP in 2 hours. ICU admission for close monitoring. I'm calling endocrinology.`
+  },
+  7: { // SAH / Hypertensive Emergency
+    oneliner:   { age:['55','fifty-five'], sex:['male','man','gentleman','mr.'], cc:['headache','worst headache','thunderclap','sudden onset headache'], pmh:['hypertension','htn','poorly controlled','uncontrolled','not on medication'] },
+    hpi:        { thunderclap:['thunderclap','worst headache of my life','worst headache of his life','sudden onset','abrupt onset','instantaneous'], onset:['while lifting','gym','exertion','90 minutes','1.5 hour'], quality:['bilateral','occipital','neck','10/10','severe'], associated:['nausea','vomiting','photophobia','phonophobia','neck stiffness'], negative:['no focal weakness','no loss of consciousness','no vision change'] },
+    history:    { pmh:['hypertension','htn','poorly controlled','no prior aneurysm','no prior stroke','not on medication'], meds:['previously on','stopped','no current medication'], allergies:['nkda','no known','allerg'], social:['smok','1 ppd','construction','alcohol'] },
+    exam:       { vitals:['bp','212','210','heart rate','84','o2','99'], neuro:['cranial nerve','motor','sensation','intact','alert and oriented','gcs'], meningeal:['nuchal rigidity','stiff neck','kernig','brudzinski'], general:['distress','prefers dark','quiet','photophobia'] },
+    workup:     { ct:['ct head','non-contrast','subarachnoid','hemorrhage','hyperdensity','blood'], cta:['cta','ct angiogram','aneurysm','aneurysmal'], lp:['lumbar puncture','lp','xanthochromia','csf'], labs:['coags','bmp','creatinine','cbc'] },
+    assessment: { primary:['subarachnoid hemorrhage','sah','intracranial hemorrhage','hemorrhagic stroke','aneurysm'], differential:['differential','thunderclap','ischemic stroke','meningitis','hypertensive emergency','vertebral artery'] },
+    plan:       { bp:['blood pressure control','nicardipine','labetalol','nitroprusside','bp goal','target bp','lower blood pressure'], neuro:['neurosurgery','neurology','neurocritical','nicu'], monitor:['icu','close monitoring','repeat imaging'], dispo:['neurosurgery','icu','admit'] },
+    cantmiss:   { 'meningitis':['meningitis'], 'intracerebral hemorrhage':['intracerebral','hypertensive hemorrhage','ich'], 'cervical artery dissection':['dissection'], 'cerebral venous thrombosis':['venous thrombosis','cvt','venous sinus'] },
+    critical:   ['neurosurgery','ct head','blood pressure','nicardipine','labetalol'],
+    model: `This is a 55-year-old male with poorly controlled hypertension — not on medications for two years — presenting with a thunderclap headache, rated 10/10, sudden onset while lifting at the gym 90 minutes ago.\n\nHe describes it as the worst headache of his life, bilateral, predominantly occipital with radiation to the neck. Associated with nausea, one episode of vomiting, photophobia, phonophobia, and neck stiffness. No focal weakness, no loss of consciousness, no vision changes. He smokes one PPD for 20 years. No current medications. No known drug allergies.\n\nOn exam he is in significant distress, preferring a dark, quiet room. Vitals: BP 212/124, HR 84, RR 16, O2 99% on room air. Neurologic: alert and oriented, cranial nerves intact, motor 5/5 all extremities, sensation intact — no focal deficits. Meningeal: positive nuchal rigidity. Kernig's and Brudzinski's negative. Pupils equal and reactive.\n\nNon-contrast CT head shows hyperdensity in the basal cisterns and sylvian fissures — consistent with subarachnoid hemorrhage. CTA head is pending to evaluate for aneurysm. UA shows 2+ protein and 1+ RBC — likely hypertensive nephropathy.\n\nMy assessment is subarachnoid hemorrhage, likely aneurysmal, in the setting of a hypertensive emergency. Differential included hypertensive intracerebral hemorrhage, meningitis, and cerebral venous thrombosis — but the CT findings and thunderclap onset are classic for SAH.\n\nMy plan: emergent neurosurgery consult now. Blood pressure management with IV nicardipine targeting a systolic of 140-160 per neurosurgery guidance. ICU admission. Strict bedrest, analgesia, and anti-emetics. Repeat CT and CTA results will guide intervention — surgical clipping versus coiling. NPO for potential OR.`
+  },
+  8: { // Anaphylaxis
+    oneliner:   { age:['28','twenty-eight'], sex:['female','woman','lady','ms.'], cc:['anaphylaxis','bee sting','allergic reaction','difficulty breathing','hives','urticaria'], pmh:['asthma','bee sting allergy','prior reaction','no epi'] },
+    hpi:        { onset:['20 min','twenty min','bee sting','stung','garden'], symptoms:['urticaria','hives','throat tightness','difficulty breathing','stridor','lightheaded','near syncope'], angioedema:['lip','tongue','uvula','angioedema','swelling'], prior:['prior reaction','3 year','mild reaction','hives only','no epi pen','no epinephrine auto'] },
+    history:    { pmh:['asthma','prior bee sting','albuterol','no prior anaphylaxis'], meds:['albuterol','inhaler'], allergies:['bee sting','bee','prior reaction'], social:['nurse','married','non-smok'] },
+    exam:       { vitals:['bp','88','heart rate','138','rr','26','o2','92','91','90'], airway:['stridor','angioedema','lip','tongue','uvula','hoarse'], skin:['urticaria','hives','flushing','rash'], pulmonary:['wheez','decreased air','expiratory'], other:['tachycardic','hypotensive','diaphoretic'] },
+    workup:     { tryptase:['tryptase','mast cell'], ekg:['ekg','ecg','sinus tachycardia'], labs:['cbc','bmp'], allergy:['ige','allergy testing'] },
+    assessment: { primary:['anaphylaxis','anaphylactic','anaphylactic shock','severe allergic'], differential:['differential','vasovagal','angioedema','asthma exacerbation','distributive shock'] },
+    plan:       { epi:['epinephrine','epi','im epinephrine','0.3 mg','0.5 mg','intramuscular','auto-injector'], airway:['airway','intubate','secure airway','rsi','video laryngoscope','early intubation'], adjuncts:['benadryl','diphenhydramine','h1','h2','famotidine','pepcid','solumedrol','steroid'], fluids:['iv fluid','normal saline','bolus'], dispo:['observe','admit','icu'] },
+    cantmiss:   { 'isolated angioedema (ace-i / hereditary)':['ace inhibitor','ace-i','hereditary angioedema','isolated angioedema'], 'severe asthma exacerbation':['asthma'], 'foreign body / airway obstruction':['foreign body','obstruction'] },
+    critical:   ['epinephrine','epi','airway','im epinephrine'],
+    model: `This is a 28-year-old female with a history of mild intermittent asthma and a prior mild bee sting reaction presenting with anaphylaxis 20 minutes after being stung by a bee in her garden.\n\nWithin minutes of the sting she developed diffuse urticaria, throat tightness, and difficulty breathing. She felt lightheaded and nearly lost consciousness walking to the car. She had a mild reaction — hives only — from a bee sting 3 years ago, no prior anaphylaxis. No epinephrine auto-injector available. Medications: albuterol inhaler PRN. No drug allergies.\n\nOn exam she is anxious with audible stridor and diffuse urticaria. Vitals: BP 88/54, HR 138, RR 26, O2 92% on room air. Airway: angioedema of the lips, tongue, and uvula. Voice is hoarse. Stridor audible. Pulmonary: bilateral expiratory wheezing, decreased air entry. Skin: diffuse urticarial rash, flushing, angioedema of the trunk. Bee sting visible on the right forearm.\n\nEKG shows sinus tachycardia at 138 with no ischemic changes. Tryptase sent.\n\nMy assessment is anaphylaxis from a bee sting — IgE-mediated — with airway compromise and distributive shock. This is bifasic risk high. Differential included vasovagal syncope and acute asthma exacerbation — but the combination of urticaria, stridor, and hemodynamic instability confirms anaphylaxis.\n\nMy plan: IM epinephrine 0.5mg in the lateral thigh — now, immediately. Large-bore IV access and 1 liter normal saline bolus. I am calling anesthesia to bedside for airway management — she has significant angioedema and early intubation is the safer approach before her airway closes further. Adjuncts: diphenhydramine IV, famotidine IV, methylprednisolone IV. Continuous cardiac monitoring and pulse ox. Biphasic reaction risk — she requires at least 6-8 hours of observation minimum. ICU if she requires intubation or second dose epi.`
+  },
+  9: { // Strep Pharyngitis
+    oneliner:   { age:['26','twenty-six'], sex:['female','woman','lady','ms.'], cc:['sore throat','pharyngitis','odynophagia','throat pain'], pmh:['no pmh','no past','otherwise healthy','healthy','no significant'] },
+    hpi:        { onset:['3 day','three day','72 hour','progressive'], quality:['odynophagia','painful to swallow','sore','worsening'], fever:['fever','febrile','101','temperature'], contact:['roommate','sick contact','exposure','contact'], negative:['no cough','deny cough','no hoarseness','no drooling','no difficulty breathing','no stridor'] },
+    history:    { pmh:['no pmh','no past','no prior','no significant','none','healthy'], meds:['ocp','oral contraceptive','ibuprofen'], allergies:['nkda','no known','no allerg'], social:['graduate','student','non-smok','roommate'] },
+    exam:       { vitals:['bp','118','heart rate','88','temp','101','fever'], pharynx:['exudate','tonsillar exudate','erythema','posterior pharynx'], uvula:['uvula midline','no peritonsillar','no asymmetry','uvula'], nodes:['cervical lymph','anterior cervical','lymphadenopathy','tender node'], other:['no stridor','lungs clear','no rash'] },
+    workup:     { strep:['rapid strep','strep test','strep antigen','throat culture'], centor:['centor','mcisaac','score'], mono:['monospot','mononucleosis','ebv','epstein'], labs:['wbc','cbc'] },
+    assessment: { primary:['strep','streptococcal','group a strep','gas pharyngitis','bacterial pharyngitis'], differential:['differential','viral','mono','mononucleosis','ebv','peritonsillar','viral pharyngitis'] },
+    plan:       { antibiotics:['amoxicillin','penicillin','antibiotic','azithromycin','cephalexin','abx'], symptom:['ibuprofen','nsaid','acetaminophen','tylenol','analgesic','pain control','throat lozenge'], dispo:['discharge','return precaution','follow-up','outpatient','primary care','pcp'] },
+    cantmiss:   { 'peritonsillar abscess':['peritonsillar','quinsy'], 'epiglottitis':['epiglottitis'], 'retropharyngeal abscess':['retropharyngeal'], 'mononucleosis (ebv)':['mono','ebv','epstein'] },
+    critical:   ['amoxicillin','penicillin','antibiotic'],
+    model: `This is a 26-year-old otherwise healthy female presenting with 3 days of progressive sore throat and odynophagia with fever.\n\nShe reports worsening sore throat rated 7/10, significant odynophagia, and fever to 101.4°F at home. No cough, no rhinorrhea. Her roommate had a similar illness last week. She denies hoarseness, drooling, or difficulty breathing. She is currently taking OCP and ibuprofen PRN. No known drug allergies.\n\nOn exam she is uncomfortable but non-toxic appearing. Vitals: BP 118/74, HR 88, RR 16, O2 99%, temp 101.4°F. HEENT: posterior pharynx erythematous with bilateral tonsillar exudates. Uvula midline, no peritonsillar bulging or asymmetry. Neck: tender anterior cervical lymphadenopathy bilaterally — no posterior nodes. Lungs clear. No rash.\n\nHer Centor score is 4 out of 4: tonsillar exudates, fever, no cough, and tender anterior cervical nodes. Rapid strep antigen is positive. Monospot is negative. WBC is 13,200.\n\nMy assessment is streptococcal pharyngitis — Group A Strep. Differential included viral pharyngitis, EBV mononucleosis, and peritonsillar abscess — monospot negative and no peritonsillar asymmetry argue against those.\n\nMy plan: amoxicillin 500mg three times daily for 10 days. I've counseled her on completing the full antibiotic course. Ibuprofen and throat lozenges for symptom management. She can return to normal activities 24 hours after starting antibiotics and once afebrile. Return precautions: drooling, difficulty opening mouth, worsening despite antibiotics — concerning for peritonsillar abscess. Discharge home.`
+  },
+  10: { // Ankle Sprain
+    oneliner:   { age:['21','twenty-one'], sex:['male','man','gentleman','mr.'], cc:['ankle','ankle pain','ankle sprain','twisted ankle','inversion'], pmh:['no pmh','no past','otherwise healthy','healthy','no prior ankle'] },
+    hpi:        { mechanism:['inversion','twisted','rolled','basketball','sports'], onset:['2 hour','two hour','immediate'], weightbearing:['bear weight','weight-bearing','walking','ambulate','limp'], swelling:['swelling','edema','ecchymosis','bruising','lateral ankle'], negative:['no pop','no numbness','no knee pain','no foot pain'] },
+    history:    { pmh:['no pmh','no past','no prior ankle','no prior injury','none','healthy'], meds:['no medication','none'], allergies:['nkda','no known','no allerg'], social:['college','student','athlete','non-smok'] },
+    exam:       { vitals:['bp','126','heart rate','76','pain','6'], tenderness:['atfl','anterior talofibular','cfl','calcaneofibular','lateral ankle tender'], ottawa:['ottawa','posterior fibula','medial malleolus','navicular','5th metatarsal','base of 5th'], special:['anterior drawer','anterior drawer test','positive anterior drawer','talar tilt'], neurovascular:['dorsalis pedis','neurovascular intact','sensation intact','cap refill','pulse'] },
+    workup:     { xray:['x-ray','xray','radiograph','plain film','ankle x-ray','three view'], ottawa:['ottawa ankle rule','ottawa negative','negative ottawa','no fracture indication'], result:['no fracture','negative','soft tissue swelling','no dislocation'] },
+    assessment: { primary:['ankle sprain','lateral ankle sprain','grade ii','grade 2','atfl','ligament sprain'], differential:['differential','fracture','avulsion','5th metatarsal','maisonneuve','osteochondral','peroneal'] },
+    plan:       { rice:['rice','rest','ice','compression','elevation'], immobilization:['boot','ace wrap','brace','splint','air cast','stirrup'], weightbearing:['weight-bearing as tolerated','wbat','crutch','partial weight'], pain:['nsaid','ibuprofen','naproxen','ketorolac','ice','pain control'], followup:['follow-up','orthopedic','sports medicine','primary care','return precaution'] },
+    cantmiss:   { 'fracture (ottawa rules)':['fracture','ottawa'], 'syndesmotic / maisonneuve injury':['syndesmo','maisonneuve','high ankle','squeeze'], 'achilles rupture':['achilles','thompson'], 'neurovascular compromise':['neurovascular','pulses','sensation'] },
+    critical:   ['rice','boot','ace wrap','weight-bearing','follow-up'],
+    model: `This is a 21-year-old otherwise healthy male with no prior ankle injuries presenting with right lateral ankle pain after an inversion injury 2 hours ago playing basketball.\n\nHe reports twisting his right ankle inwardly while jumping for a rebound. Immediate lateral ankle pain and swelling. He was able to bear weight immediately after but with significant pain and a limp. No audible or felt pop. No knee pain, no foot pain, no numbness. No medications, no known drug allergies.\n\nOn exam he is well-appearing and ambulatory with an antalgic gait. Vitals: BP 126/78, HR 76, temp 98.4°F, pain 6/10. Right ankle: moderate swelling and early ecchymosis over the lateral ankle. Tenderness over the ATFL and CFL. No tenderness over the posterior tip of the fibula, medial malleolus, navicular, or base of the 5th metatarsal. Ottawa Ankle Rules negative. Positive anterior drawer test indicating ATFL laxity. Sensation intact in the foot. Dorsalis pedis and posterior tibial pulses 2+ bilaterally.\n\nAnkle X-ray in three views shows no fracture or dislocation — only soft tissue swelling laterally.\n\nMy assessment is a Grade II lateral ankle sprain involving the ATFL and CFL with no fracture. Differential included avulsion fracture of the 5th metatarsal base and anterior process calcaneus fracture — excluded by Ottawa criteria and X-ray.\n\nMy plan: RICE — rest, ice 20 minutes on/off, compression ACE wrap or stirrup brace, elevation above heart level. Weight-bearing as tolerated with a walking boot for comfort. Ibuprofen 600mg every 6 hours with food for 5 days. I'll provide crutches if he feels he needs them. Return precautions: worsening pain, inability to bear weight, neurovascular changes. Follow-up with sports medicine or orthopedics in 1–2 weeks if not improving. Discharge home.`
+  },
+  11: { // Migraine
+    oneliner:   { age:['31','thirty-one'], sex:['female','woman','lady','ms.'], cc:['headache','migraine','head pain'], pmh:['migraine','known migraineur','history of migraine','prior migraine'] },
+    hpi:        { onset:['6 hour','six hour','gradual','known migraine','typical migraine','similar to usual'], quality:['unilateral','throbbing','pulsating','one-sided','left-sided','pounding'], associated:['nausea','photophobia','phonophobia','light sensitive','sound sensitive'], tried:['ibuprofen','nsaid','tried at home','no relief','sumatriptan','ran out'], negatives:['no fever','no neck stiffness','no focal weakness','no vision change','no thunderclap','no worst headache'] },
+    history:    { pmh:['migraine','prior migraine','5 year','history of migraine'], meds:['sumatriptan','ocp','oral contraceptive','ibuprofen'], allergies:['nkda','no known','no allerg'], social:['accountant','stress','non-smok','minimal alcohol'] },
+    exam:       { vitals:['bp','124','heart rate','82','o2','99','afebrile'], neuro:['cranial nerve','motor','5/5','no focal','sensation intact','no pronator drift','oriented'], meningeal:['no nuchal rigidity','nuchal rigidity negative','kernig','brudzinski','no meningismus'], fundoscopic:['no papilledema','papilledema','fundoscopic','optic disc'], other:['photophobia','lying still','eyes closed','prefers dark'] },
+    workup:     { imaging:['no ct','ct not indicated','ct not ordered','ct head','no red flag'], redflags:['no red flag','no thunderclap','no fever','no focal deficit','no papilledema','typical presentation'], glucose:['glucose','hypoglycemia','blood sugar'] },
+    assessment: { primary:['migraine','migraine without aura','primary headache','typical migraine'], differential:['differential','tension headache','cluster headache','secondary headache','sah','meningitis','hypertensive','cervicogenic'] },
+    plan:       { abortive:['prochlorperazine','compazine','metoclopramide','reglan','droperidol','ketorolac','toradol','sumatriptan','triptan'], adjuncts:['diphenhydramine','benadryl','iv fluid','fluid','hydration','dark room','quiet'], dispo:['discharge','outpatient','neurology','primary care','follow-up','return precaution'], prevention:['topiramate','amitriptyline','propranolol','preventive','prophylaxis','preventive medication'] },
+    cantmiss:   { 'subarachnoid hemorrhage':['subarachnoid','sah','thunderclap'], 'meningitis':['meningitis','nuchal','meningismus'], 'mass / elevated icp':['mass','tumor','papilledema'], 'temporal arteritis':['temporal arteritis','giant cell','temporal artery'] },
+    critical:   ['prochlorperazine','compazine','metoclopramide','ketorolac','toradol','abortive'],
+    model: `This is a 31-year-old female with a known history of migraine without aura — approximately 2 per month for 5 years — presenting with a 6-hour typical migraine headache.\n\nGradual onset left-sided throbbing headache, now 9/10. She describes it as consistent with her prior migraines. Associated nausea, photophobia, and phonophobia. She tried ibuprofen at home without significant relief and ran out of sumatriptan. No aura. She denies fever, neck stiffness, focal weakness, vision changes, or thunderclap onset. She reports significant work stress lately. Medications: sumatriptan 100mg PRN (unavailable), OCP. No known drug allergies.\n\nOn exam she is uncomfortable, lying still with eyes closed in a dimly lit room. Vitals: BP 124/78, HR 82, RR 14, O2 99%, afebrile. Neurologic exam: alert and oriented x4, cranial nerves II–XII intact, motor 5/5 all extremities, no pronator drift, sensation intact. No nuchal rigidity, Kernig's and Brudzinski's negative. No papilledema on fundoscopic exam. No temporal artery tenderness.\n\nNo CT head obtained — presentation is typical of her known migraine with no secondary headache red flags: no thunderclap onset, no fever, no focal deficits, no papilledema, no meningismus. Glucose is normal at 94.\n\nMy assessment is migraine without aura — typical presentation. Differential included tension headache, cluster headache, cervicogenic headache, and secondary causes such as SAH and meningitis — all excluded by history and exam.\n\nMy plan: IV access and 1 liter normal saline for hydration. IV prochlorperazine 10mg with IV diphenhydramine 25mg to prevent akathisia. IV ketorolac 15mg for pain. Dark, quiet room while medication takes effect. Reassess in 60 minutes. At discharge: prescription for sumatriptan refill and NSAIDs. Return precautions: thunderclap onset, fever, neck stiffness, focal deficits, vision changes — any of these warrant immediate return. Neurology follow-up for consideration of preventive therapy given frequency. Discharge home with a ride.`
+  }
+};
+
+/* ── ATTENDING QUESTIONS ─────────────────────────────────────── */
+const ATTENDING_QUESTIONS = {
+  1: [ // STEMI
+    { q: 'He took his aspirin 81mg daily at home this morning. What dose of aspirin do you give now and why?', keywords: ['aspirin 325','loading dose','325','chew'], model: 'Give aspirin 325mg (non-enteric-coated) chewed immediately — this is the loading dose. His daily 81mg does not substitute for a loading dose in an acute STEMI. Chewing increases absorption speed. This is one of the few time-to-drug interventions with proven mortality benefit alongside reperfusion.' },
+    { q: 'He is on metformin for his diabetes. Does that change anything about his cath lab workup?', keywords: ['metformin','contrast','hold','nephropathy'], model: 'Yes — metformin should be held after contrast exposure (during PCI) due to the risk of contrast-induced nephropathy causing metformin accumulation and lactic acidosis. Hold for 48 hours post-procedure and recheck creatinine before restarting. This is a standard post-cath order.' },
+    { q: 'His BP is 148/92 — do you treat the hypertension before PCI, and would you give nitroglycerin?', keywords: ['treat bp','nitro','nitroglycerin','antihypertensive','lower bp'], model: 'Aggressive antihypertensives before cath are not indicated — the priority is reperfusion. Nitroglycerin can relieve chest pain and reduce preload, but is contraindicated in inferior STEMI if right ventricular (RV) involvement is suspected — nitro in an RV infarct can cause catastrophic hypotension. Always check right-sided leads before giving nitro in inferior STEMI.' },
+    { q: 'What is your contingency plan if he becomes hemodynamically unstable before the cath lab is ready?', keywords: ['unstable','cardiogenic shock','iabp','balloon pump','inotrope','dopamine','dobutamine','stabilize'], model: 'Cardiogenic shock protocol: IV fluid bolus (cautiously in RV infarct), vasopressors (norepinephrine preferred over dopamine for shock), and emergent cath regardless of instability — there is no benefit to stabilizing before definitive reperfusion. Call cardiology and anesthesia simultaneously. If he arrests, CPR and immediate cath is still the approach at a cath-capable center.' },
+  ],
+  2: [ // Septic Shock
+    { q: 'You started vancomycin and pip-tazo. She has a sulfa allergy — does that affect your antibiotic choices?', keywords: ['sulfa allergy','sulfonamide','allergy antibiotic','cross-react'], model: 'Sulfa allergy does NOT cross-react with cephalosporins, carbapenems, or penicillins in the vast majority of patients. Piperacillin-tazobactam is a beta-lactam — safe to use. Vancomycin has no sulfa component. The one drug class to avoid is trimethoprim-sulfamethoxazole. Metronidazole, azithromycin, and carbapenems are all safe.' },
+    { q: 'Her lactate is 4.6. What does that tell you, and when do you recheck it?', keywords: ['lactate clearance','repeat lactate','2 hour','lactate goal','clearance'], model: 'Lactate ≥4 mmol/L indicates tissue hypoperfusion and is a criterion for septic shock. Lactate clearance ≥10% at 2 hours is associated with improved outcomes and is a target in the Surviving Sepsis Campaign hour-1 bundle. Repeat at 2 hours. Failure to clear should prompt reassessment of fluid status, vasopressor dose, and source control.' },
+    { q: 'She is altered — what is your threshold to intubate, and what induction agent is safest given her hemodynamics?', keywords: ['intubate','induction','ketamine','etomidate','rsi','intubation threshold','hemodynamic'], model: 'Threshold: worsening mental status reducing airway protection, inability to clear secretions, respiratory failure, or anticipated clinical deterioration. In hypotensive septic shock, use ketamine for induction (maintains hemodynamics, bronchodilator effect) or reduced-dose etomidate. Avoid propofol and high-dose benzodiazepines — both drop BP. Push-dose epinephrine should be at bedside for peri-intubation hypotension.' },
+  ],
+  3: [ // Stroke
+    { q: 'He took apixaban this morning — how does that change your tPA decision?', keywords: ['apixaban tpa','anticoagulant tpa','hold tpa','contraindication tpa','coag level'], model: 'Apixaban within the last 48 hours is a relative contraindication to tPA. With a dose taken this morning, tPA is likely unsafe unless an anti-Xa level confirms sub-therapeutic levels. This makes thrombectomy (mechanical, not pharmacologic) the priority — it carries lower bleeding risk independent of anticoagulation. Neurology makes the final call; do not delay thrombectomy workup while waiting.' },
+    { q: 'The CTA shows a right MCA M1 occlusion. What is the maximum time window for thrombectomy, and does it depend only on time?', keywords: ['thrombectomy window','24 hour','dawn','defuse','penumbra','mismatch','late window'], model: 'Per DAWN and DEFUSE-3 trials, thrombectomy can be offered up to 24 hours from LKW if imaging shows a favorable penumbra-to-core mismatch (viable tissue that can be saved). The decision is imaging-based, not time-based alone. This patient is well within any window at 40 minutes. The M1 occlusion with functional deficits is a strong indication regardless of anticoagulation.' },
+    { q: 'After this hospitalization, what is the plan for his atrial fibrillation and long-term stroke prevention?', keywords: ['long-term anticoag','chads','secondary prevention','afib anticoag'], model: 'He has AFib with a CHA₂DS₂-VASc score of at least 4 (age, hypertension, prior TIA, stroke now) — very high embolic risk. Long-term anticoagulation with a DOAC (apixaban preferred) is strongly indicated. The timing of restart post-stroke is typically 1-2 weeks for large strokes, sooner for smaller infarcts — neurology and cardiology guide this. This conversation should happen prior to discharge.' },
+  ],
+  4: [ // PE
+    { q: 'Her troponin is elevated and her BP is borderline. Does this qualify as massive or submassive PE, and does that change your approach to thrombolytics?', keywords: ['massive','submassive','systemic thrombolysis','tpa pe','hemodynamically unstable','shock'], model: 'Elevated troponin + BNP with a BP of 106/72 (not in frank shock) classifies this as submassive (intermediate-high risk) PE. Systemic tPA is NOT first-line for submassive PE — the mortality benefit doesn\'t clearly outweigh the bleeding risk. Preferred approach: anticoagulate now, consult IR/cardiology for catheter-directed thrombolysis (CDT) given RV strain. If she deteriorates into massive PE (SBP <90 or cardiac arrest), systemic tPA becomes life-saving immediately.' },
+    { q: 'She is post-op day 6 from major surgery. Does that affect your anticoagulation choice?', keywords: ['post-op anticoag','heparin reversal','unfractionated','ufh','protamine','recent surgery'], model: 'Recent major surgery is a relative contraindication to thrombolytics but NOT to anticoagulation — anticoagulate all PEs unless actively bleeding. IV unfractionated heparin (UFH) is preferred in the post-op and submassive setting because it is reversible (protamine), has a short half-life, and can be rapidly stopped if she needs an interventional procedure or develops bleeding. Avoid LMWH for potential CDT candidates.' },
+    { q: 'She is on oral contraceptives. Do you discontinue them, and how do you counsel her?', keywords: ['ocp stop','contraception','estrogen discontinue','hormonal','counsel ocp'], model: 'Yes — discontinue estrogen-containing OCP immediately. Estrogen significantly increases VTE risk and is likely a contributing factor here (Virchow\'s triad: OCP + post-op immobility + venous injury). Going forward, estrogen-containing contraceptives are contraindicated. Safe alternatives include progestin-only pill, hormonal IUD, or non-hormonal methods. She will need anticoagulation for at least 3-6 months minimum given provoked DVT/PE. Refer to OB/GYN.' },
+  ],
+  5: [ // Appendicitis
+    { q: 'Surgery is backed up — he won\'t go to the OR for 6 hours. Is that acceptable, and what are you monitoring for?', keywords: ['delay','time to or','6 hour','perforation risk','npo observation'], model: 'Studies show that delays of up to 12-24 hours for uncomplicated appendicitis do not significantly increase perforation rates, but guidelines recommend OR within 24 hours. Keep him NPO, IV antibiotics, and IV fluids. Monitor closely for: rising fever, increasing tachycardia, worsening pain, peritoneal signs (rigid abdomen, rebound) — all suggesting perforation, which changes to emergent OR. Communicate a firm OR commitment time with surgery.' },
+    { q: 'He is a young, healthy male. Is non-operative management a reasonable option to discuss?', keywords: ['non-operative','antibiotics only','conservative management','interval appendectomy'], model: 'Yes — for uncomplicated appendicitis (no perforation, no abscess, no fecalith on CT), non-operative management with IV antibiotics alone has a success rate of approximately 70-75% at 1 year. However, the recurrence rate at 5 years is ~40%, and many ultimately have appendectomy. For a young, otherwise healthy patient, surgery is still considered the gold standard. The patient should be counseled on both options and participate in the decision.' },
+    { q: 'What pre-operative antibiotic do you give, and why is antibiotic choice important here?', keywords: ['cefazolin','cefoxitin','metronidazole','pre-op abx','operative prophylaxis','anaerobe'], model: 'Appendicitis requires coverage of gram-negative aerobes AND anaerobes. Cefazolin alone (first-generation) does not cover anaerobes adequately. Use cefoxitin (second-generation cephalosporin with anaerobe coverage) or cefazolin plus metronidazole. Piperacillin-tazobactam is appropriate for perforated or complicated appendicitis. Follow your institution\'s SSI prophylaxis guidelines.' },
+  ],
+  6: [ // DKA
+    { q: 'Her potassium is 5.8 right now. When exactly do you start insulin, and what happens to potassium after you do?', keywords: ['potassium threshold','hold insulin','k below 3.5','insulin potassium','hypokalemia'], model: 'Never start insulin if potassium is below 3.5 mEq/L — insulin shifts K intracellularly and can cause life-threatening hypokalemia and cardiac arrhythmias. At 5.8, it is safe to start now. However, anticipate K will drop rapidly once insulin is running and DKA resolves. Replace potassium in IV fluids when K drops below 5.0 mEq/L, and aggressively when below 4.0. Check K every 1-2 hours.' },
+    { q: 'Her pH is 7.12 and bicarb is 8. Would you give sodium bicarbonate?', keywords: ['sodium bicarb','bicarbonate treatment','no bicarb','avoid bicarb','ph bicarb'], model: 'No — sodium bicarbonate is not recommended for DKA, even with severe acidosis like pH 7.12. The acidosis corrects naturally with IV fluids and insulin. Risks of bicarb include: paradoxical CNS acidosis (CO₂ crosses the blood-brain barrier faster than bicarb), worsening hypokalemia, and rebound alkalosis. Consider bicarb ONLY if pH is below 6.9 with hemodynamic instability — this patient does not meet that threshold.' },
+    { q: 'At what glucose level do you add dextrose to her IV fluids, and why is this step critical?', keywords: ['dextrose','d5','d10','glucose 200','200 glucose','add sugar','transition'], model: 'Add dextrose (D5 or D10) when glucose drops to approximately 200-250 mg/dL. This allows you to CONTINUE the insulin drip to close the anion gap — which takes longer than glucose normalization — without causing hypoglycemia. The key teaching point: DKA resolution requires anion gap closure, not just glucose normalization. Stopping insulin when glucose normalizes without adding dextrose is a common and dangerous error.' },
+  ],
+  7: [ // SAH / Hypertensive Emergency
+    { q: 'What is your BP target and which IV agent would you choose?', keywords: ['nicardipine','labetalol','target 140','target 160','systolic goal','bp agent'], model: 'Target SBP 140-160 mmHg before the aneurysm is secured — lower risks cerebral ischemia, higher risks rebleed. IV nicardipine is preferred: titratable, predictable effect, no reflex tachycardia. IV labetalol is an acceptable alternative. Avoid nitroprusside (can increase intracranial pressure via cerebral vasodilation) and hydralazine (unpredictable). Once neurosurgery secures the aneurysm, BP targets may be liberalized.' },
+    { q: 'The CTA comes back negative for aneurysm. What is your next step?', keywords: ['negative cta','dsa','digital subtraction','angiography','lp','xanthochromia','perimesencephalic'], model: 'A negative CTA does NOT rule out aneurysm — false negative rate is 5-10% for small aneurysms. Next step: catheter-based digital subtraction angiography (DSA), the gold standard. If DSA is also negative, consider perimesencephalic non-aneurysmal SAH (blood confined to the cisterns around the midbrain) — a benign subtype with low rebleed risk. Neurosurgery guides all further imaging decisions.' },
+    { q: 'He has nuchal rigidity but CT shows the SAH clearly. Would you still perform a lumbar puncture?', keywords: ['lp','lumbar puncture','xanthochromia','csf','skip lp','not needed lp'], model: 'No — if CT is positive for SAH, LP is not needed and adds delay. LP (looking for xanthochromia) is reserved for the CT-negative thunderclap headache, where SAH must still be ruled out. A positive CT for SAH is already diagnostic. Proceeding with LP when CT is positive adds risk (herniation if there is elevated ICP) and delays neurosurgical consultation.' },
+  ],
+  8: [ // Anaphylaxis
+    { q: 'You are concerned her airway is closing from angioedema. Walk me through your intubation approach.', keywords: ['video laryngoscope','difficult airway','awake intubation','bougie','cricothyrotomy','surgical airway','rsi ketamine'], model: 'Angioedema is one of the most feared airways in EM. Preferred approach: (1) Video laryngoscopy with a bougie immediately available; (2) Surgical airway (cric) kit open and at bedside with a second provider ready; (3) Ketamine for induction — it maintains airway tone until the paralytic takes effect; (4) If you cannot visualize cords and cannot oxygenate, perform emergency cricothyrotomy — do NOT persist with bag-mask in progressive angioedema. Early intubation before complete closure is far safer than waiting.' },
+    { q: 'What must she have before leaving the emergency department, and how long do you observe her?', keywords: ['epi-pen','epinephrine auto','discharge','observe','biphasic','6 hour','8 hour'], model: 'Minimum 4-8 hours observation for biphasic anaphylaxis risk (occurs in 5-20%, usually within 8 hours). Before discharge: (1) Two epinephrine auto-injectors (EpiPen 0.3mg) with demonstrated ability to use; (2) Allergy action plan; (3) Allergy/immunology referral for venom immunotherapy (90-95% effective in preventing future reactions); (4) Strict return precautions. Given her airway involvement and severity, 8+ hours or overnight observation is appropriate.' },
+    { q: 'She develops worsening bronchospasm despite epinephrine. What is your next step?', keywords: ['albuterol','nebulizer','bronchospasm refractory','magnesium','heliox','intubate bronchospasm'], model: 'Second-line for refractory bronchospasm in anaphylaxis: (1) Back-to-back albuterol nebulizers; (2) IV magnesium sulfate 2g over 20 minutes (bronchodilator); (3) IV methylprednisolone 125mg (onset 4-6 hours, for late-phase response); (4) Consider heliox if stridor persists. A second dose of IM epinephrine every 5-15 minutes for persistent anaphylaxis. If she is not responding, prepare for intubation — anaphylaxis is a dynamic airway emergency.' },
+  ],
+  9: [ // Strep Pharyngitis
+    { q: 'The monospot is negative. How confident are you this is not infectious mononucleosis, and why does it matter for your treatment?', keywords: ['false negative mono','monospot sensitivity','ebv','week 1','amoxicillin rash','pcr ebv'], model: 'Monospot has a false-negative rate of up to 25% in the first week of EBV infection. This patient is 26 with bilateral exudates and a sick contact. This matters critically because amoxicillin in EBV mononucleosis causes a florid maculopapular rash in 80-100% of patients. If there is any uncertainty, send EBV IgM/IgG titers, avoid amoxicillin, and use azithromycin or clindamycin instead. If she returns worse on amoxicillin, rethink mono.' },
+    { q: 'What specific complications of strep pharyngitis do you include in her return precautions?', keywords: ['peritonsillar','rheumatic fever','glomerulonephritis','scarlet fever','lemierre','complication'], model: 'Key return precautions: (1) Peritonsillar abscess — drooling, muffled "hot potato" voice, uvular deviation, trismus (inability to open mouth); (2) Retropharyngeal abscess; (3) Scarlet fever rash; (4) Rheumatic fever — prevented by completing the full antibiotic course; (5) Post-streptococcal glomerulonephritis — not prevented by antibiotics. Rare but critical: Lemierre\'s syndrome (septic IJV thrombophlebitis) if fever persists with neck swelling despite antibiotics.' },
+    { q: 'She is on oral contraceptives. Does amoxicillin interact with her OCP?', keywords: ['ocp interaction','antibiotic ocp','backup contraception','pill effectiveness'], model: 'Current evidence does NOT support a clinically significant interaction between amoxicillin and OCP efficacy. The American College of OBGYNs does not recommend backup contraception for standard antibiotics. The only antibiotic with a demonstrated OCP interaction (via CYP3A4 induction) is rifampin. However, it is reasonable to mention this if she asks, and backup contraception is a low-risk recommendation for a patient who is concerned.' },
+  ],
+  10: [ // Ankle Sprain
+    { q: 'What is the difference between a Grade I, II, and III lateral ankle sprain, and how does grading change your management?', keywords: ['grade i','grade ii','grade iii','grade 1','grade 2','grade 3','partial tear','complete tear','grading'], model: 'Grade I: ligament stretch, no tear, mild swelling — RICE, WBAT, no immobilization needed. Grade II (this patient): partial tear (ATFL + CFL), moderate swelling, positive anterior drawer — walking boot, WBAT, RICE, PT referral. Grade III: complete rupture, significant instability, unable to bear weight — cast or boot, orthopedic referral for surgical evaluation if functionally unstable. The positive anterior drawer with bilateral ligament tenderness and ecchymosis places this patient firmly at Grade II.' },
+    { q: 'He wants to play basketball again in two days. How do you counsel him?', keywords: ['return to sport','return to play','2 days','basketball','activity restriction'], model: 'Grade II sprains require 2-6 weeks before return to sport depending on functional recovery. In 2 days he will not have adequate healing for cutting, jumping, or pivoting. Premature return risks a Grade III sprain or avulsion fracture. Structured rehab — range of motion, then proprioception, then strength, then sport-specific training — should guide return-to-play. Refer to sports medicine or PT for a formal program. Return once he can run, cut, and jump without pain.' },
+    { q: 'Ottawa Ankle Rules are negative. He is insisting on an X-ray. How do you handle that?', keywords: ['ottawa negative','patient request xray','refuse','shared decision','clinical decision'], model: 'Ottawa Ankle Rules have near-100% sensitivity for clinically significant fractures — if negative, X-ray is not clinically indicated and exposes him to unnecessary radiation. However, shared decision-making matters. Explain the Ottawa rules, your exam findings, and your clinical confidence. If he remains highly anxious or has factors that lower your confidence (obesity, significant swelling obscuring palpation, intoxication), obtaining an X-ray is reasonable. Document your clinical rationale either way.' },
+  ],
+  11: [ // Migraine
+    { q: 'What red flags would have led you to CT this patient despite her known migraine history?', keywords: ['ct indication','red flag','snoop','thunderclap','first headache','worst ever','fever','focal deficit','papilledema'], model: 'Secondary headache red flags (SNOOP4): Systemic symptoms (fever, weight loss), Neurologic deficits (new focal findings), Onset sudden/thunderclap, Older age (new headache after 50), Prior pattern change (different from usual migraines), Positional, Papilledema, Pregnancy/post-partum. This patient has none of these — her presentation is entirely consistent with her established migraine pattern. CT in a classic migraine presentation has very low yield and exposes her to radiation.' },
+    { q: 'You gave prochlorperazine and she develops restlessness and cannot sit still. What is happening and how do you treat it?', keywords: ['akathisia','restlessness','extrapyramidal','prochlorperazine side effect','benadryl akathisia'], model: 'This is akathisia — a distressing feeling of internal restlessness and compulsion to move, a common dopamine-antagonist side effect of prochlorperazine. It appears within 30-90 minutes. Treatment: IV diphenhydramine 25-50mg (this is why we pre-medicate). If Benadryl doesn\'t resolve it, lorazepam 1mg IV is effective. Do not give more prochlorperazine. This is why coadministering diphenhydramine is standard when using phenothiazines for migraine.' },
+    { q: 'She gets 2 migraines per month. Does she qualify for preventive therapy, and what would you recommend?', keywords: ['preventive','prophylaxis','topiramate','amitriptyline','propranolol','cgrp','frequency'], model: '2+ disabling migraines per month is a standard threshold for preventive therapy discussion. First-line options: topiramate 25-100mg/night (effective but cognitive side effects), amitriptyline 10-75mg/night, or propranolol 40-160mg/day. Newer CGRP antagonists (erenumab, fremanezumab) are highly effective with fewer side effects but expensive. This is best initiated by neurology or primary care with appropriate monitoring. Document that you counseled her and provided a neurology referral.' },
+  ],
+};
+
+function selectAttendingQuestions(presentationText, caseId) {
+  const t = presentationText.toLowerCase();
+  const bank = ATTENDING_QUESTIONS[caseId] || [];
+  if (!bank.length) return [];
+  const uncovered = bank.filter(q =>
+    !q.keywords.some(kw => t.includes(kw.toLowerCase()))
+  );
+  // Prefer uncovered; if all covered, fall back to full bank. Always return up to 2.
+  const pool = uncovered.length >= 1 ? uncovered : bank;
+  return pool.slice(0, 2);
+}
+
+/* ── SCORING FUNCTION ────────────────────────────────────────── */
+function scoreLocally(presentation, c) {
+  const t = presentation.toLowerCase();
+  const s = SCORING[c.id];
+  const found = {};
+
+  function hits(kwList) {
+    return kwList.some(kw => t.includes(kw.toLowerCase()));
+  }
+  function groupScore(groups) {
+    const keys = Object.keys(groups);
+    const matched = keys.filter(k => hits(groups[k]));
+    found[`_matched`] = matched;
+    return { matched: matched.length, total: keys.length, keys, matched: matched };
+  }
+
+  // Score each category
+  const ol = groupScore(s.oneliner);
+  const hpiG = groupScore(s.hpi);
+  const hxG = groupScore(s.history);
+  const exG = groupScore(s.exam);
+  const wkG = groupScore(s.workup);
+  const dxG = groupScore({ primary: s.assessment.primary });
+  const cmG = groupScore(s.cantmiss);
+  const plG = groupScore(s.plan);
+
+  // ── FLOW / ORDER ────────────────────────────────────────────
+  // Order is assessed by where each section's content FIRST appears
+  // in the text, compared against the canonical EM presentation order.
+  const FLOW_ORDER  = ['oneliner','hpi','history','exam','workup','diagnosis','cantmiss','plan'];
+  const FLOW_LABELS = { oneliner:'one-liner', hpi:'HPI', history:'pertinent history', exam:'physical exam', workup:'workup', diagnosis:'assessment / diagnosis', cantmiss:"can't-miss differentials", plan:'plan & disposition' };
+  const flowGroupsFor = (k) => k === 'diagnosis' ? { primary: s.assessment.primary } : s[k];
+  function flowFirstIndex(k) {
+    let min = Infinity;
+    Object.values(flowGroupsFor(k)).forEach(list => list.forEach(kw => {
+      const idx = t.indexOf(kw.toLowerCase());
+      if (idx !== -1 && idx < min) min = idx;
+    }));
+    return min;
+  }
+  const flowRank = {}; FLOW_ORDER.forEach((k, i) => { flowRank[k] = i; });
+  const flowPresent = FLOW_ORDER
+    .map(k => ({ key: k, idx: flowFirstIndex(k) }))
+    .filter(o => o.idx !== Infinity)
+    .sort((a, b) => a.idx - b.idx);
+
+  let flowScore = 0;
+  const flowIssues = [];
+  if (flowPresent.length >= 2) {
+    let concordant = 0, pairs = 0;
+    for (let i = 0; i < flowPresent.length - 1; i++) {
+      pairs++;
+      const a = flowPresent[i].key, b = flowPresent[i + 1].key;
+      if (flowRank[a] < flowRank[b]) { concordant++; }
+      else { flowIssues.push(`Flow: ${FLOW_LABELS[a]} came before ${FLOW_LABELS[b]} — present the ${FLOW_LABELS[b]} first.`); }
+    }
+    flowScore = Math.round((concordant / pairs) * 10);
+  }
+
+  function pct(g, max) { return Math.round((g.matched.length / g.keys.length) * max); }
+
+  const scores = {
+    oneliner:   pct(ol,  10),
+    hpi:        pct(hpiG, 15),
+    history:    pct(hxG,  10),
+    exam:       pct(exG,  13),
+    workup:     pct(wkG,  12),
+    diagnosis:  pct(dxG,  10),
+    cantmiss:   pct(cmG,  10),
+    plan:       pct(plG,  10),
+    flow:       flowScore,
+  };
+  const total = Object.values(scores).reduce((a, b) => a + b, 0);
+  const grade = total >= 90 ? 'A' : total >= 80 ? 'B' : total >= 70 ? 'C' : total >= 60 ? 'D' : 'F';
+
+  // Critical misses
+  const critical_misses = s.critical.filter(kw => !t.includes(kw.toLowerCase())).map(kw =>
+    `Did not mention "${kw}" — critical for this diagnosis.`
+  );
+  if (scores.diagnosis === 0) {
+    critical_misses.unshift('Did not commit to a most likely diagnosis — every presentation must end with one.');
+  }
+
+  // Strengths (categories that scored ≥ 75%)
+  const catLabels = { oneliner:'One-liner', hpi:'HPI', history:'Pertinent history', exam:'Physical exam', workup:'Workup', diagnosis:'Most likely diagnosis', cantmiss:"Can't-miss differentials", plan:'Plan & disposition', flow:'Flow & order' };
+  const catMax =    { oneliner:10, hpi:15, history:10, exam:13, workup:12, diagnosis:10, cantmiss:10, plan:10, flow:10 };
+  const strengths = Object.entries(scores)
+    .filter(([k, v]) => v / catMax[k] >= 0.75)
+    .map(([k]) => `Strong ${catLabels[k]} — covered the key elements well.`);
+
+  // Improvements (categories that scored < 60%)
+  const improvements = [];
+  const missMap = {
+    oneliner:   { age:'patient age', sex:'patient sex/gender', cc:'chief complaint', pmh:'key past medical history' },
+    hpi:        { onset:'onset and timing', quality:'quality/character of symptoms', severity:'severity (pain scale)', radiation:'radiation or spread', associated:'associated symptoms', modifying:'modifying factors (what makes it better/worse)', negatives:'pertinent negatives in the HPI' },
+    history:    { pmh:'past medical history', meds:'medications', allergies:'allergies', social:'social history' },
+    exam:       { vitals:'vital signs', general:'general appearance', cardiac:'cardiac exam', pulmonary:'pulmonary exam', negatives:'pertinent negatives on exam' },
+    workup:     { ct:'key imaging', labs:'relevant labs', ekg:'EKG / key diagnostic test', results:'interpretation of key results', cultures:'blood cultures / cultures' },
+    diagnosis:  { primary:'a committed most likely diagnosis' },
+    plan:       { treatment:'specific treatment interventions', consult:'consult / specialist involvement', dispo:'disposition', bundle:'sepsis bundle / time-critical management', epi:'epinephrine', tpa:'tPA / reperfusion therapy', anticoag:'anticoagulation' },
+  };
+  const groupSource = { oneliner:'oneliner', hpi:'hpi', history:'history', exam:'exam', workup:'workup', plan:'plan' };
+
+  Object.entries(scores).forEach(([cat, score]) => {
+    if (score / catMax[cat] < 0.6 && missMap[cat] && groupSource[cat]) {
+      const catGroups = s[groupSource[cat]];
+      Object.keys(catGroups).forEach(group => {
+        if (!hits(catGroups[group]) && missMap[cat][group]) {
+          improvements.push(`${catLabels[cat]}: Missing ${missMap[cat][group]}.`);
+        }
+      });
+    }
+  });
+
+  // Can't-miss differentials — always call out any that went unaddressed (listed first)
+  Object.keys(s.cantmiss).reverse().forEach(group => {
+    if (!hits(s.cantmiss[group])) {
+      improvements.unshift(`Can't-miss differential not addressed: ${group}.`);
+    }
+  });
+
+  // Flow / order — surface the most prominent out-of-sequence sections
+  flowIssues.slice(0, 2).reverse().forEach(msg => improvements.unshift(msg));
+
+  // Coaching tip based on lowest scoring category
+  const tips = {
+    oneliner:   'Lead every presentation with a clear one-liner: "[Age]-year-old [sex] with [key PMH] presenting with [CC]." The attending forms their gestalt in the first sentence.',
+    hpi:        'Build your HPI around OLDCARTS: Onset, Location, Duration, Character, Aggravating factors, Relieving factors, Timing, and associated Symptoms. Pertinent negatives are just as important as positives.',
+    history:    'Always include medications and allergies — they affect every treatment decision. One missed allergy can cause a critical error.',
+    exam:       'Vital signs belong in every oral presentation — they\'re the most objective data you have. Also practice stating explicit pertinent negatives: "no JVD, no peripheral edema."',
+    workup:     'Don\'t just list tests — interpret them. "EKG showed ST elevations in the inferior leads" is far stronger than "I got an EKG."',
+    diagnosis:  'Commit to a single most likely diagnosis and say it out loud: "My assessment is X." Hedging with only a list of possibilities tells the attending you haven\'t synthesized the case.',
+    cantmiss:   'For every chief complaint, name the can\'t-miss diagnoses and state why each is unlikely — "no fever or meningismus, so meningitis is unlikely." Ruling out killers is what separates an EM presentation from a recitation.',
+    plan:       'A complete plan includes: specific interventions (with doses when possible), who you\'re consulting, and where the patient is going. "Admit" is not a complete disposition — say what service and what level of care.',
+    flow:       'Deliver the presentation in the expected sequence: one-liner, HPI, pertinent history, physical exam, then workup — and only then your assessment, can\'t-miss differentials, and plan. Stating your diagnosis before the data makes it sound like a guess instead of a synthesis.',
+  };
+
+  const worstCat = Object.entries(scores).reduce(([wk, wv], [k, v]) => v/catMax[k] < wv/catMax[wk] ? [k, v] : [wk, wv], ['oneliner', scores.oneliner])[0];
+
+  const grade_summary = total >= 90
+    ? 'Excellent presentation — well-organized, complete, and clinically sound.'
+    : total >= 80
+    ? 'Good presentation with solid clinical reasoning. A few gaps to address.'
+    : total >= 70
+    ? 'Adequate presentation but missing key elements that would concern an attending.'
+    : total >= 60
+    ? 'Significant gaps in the presentation — critical information is incomplete or missing.'
+    : 'Major revision needed — the presentation is missing foundational components.';
+
+  return {
+    scores,
+    total,
+    grade,
+    grade_summary,
+    strengths: strengths.length ? strengths : ['Presentation was attempted — keep practicing with the feedback below.'],
+    improvements: improvements.slice(0, 7),
+    critical_misses,
+    model_presentation: s.model,
+    coaching_tip: tips[worstCat] || tips.hpi,
+    attendingQuestions: selectAttendingQuestions(presentation, c.id),
+  };
+}
+
+/* ── ATTENDING QUESTIONS FLOW ────────────────────────────────── */
+function showAttendingQuestions(result) {
+  pendingResult = result;
+
+  const container = document.getElementById('aq-questions-container');
+  container.innerHTML = result.attendingQuestions.map((q, i) => `
+    <div class="aq-card">
+      <div class="aq-num">Question ${i + 1} of ${result.attendingQuestions.length}</div>
+      <div class="aq-question">${q.q}</div>
+      <textarea class="aq-textarea" id="aq-answer-${i}"
+        placeholder="Type your answer here…"></textarea>
+    </div>
+  `).join('');
+
+  showWorkspace('questions');
+}
+
+function submitAttendingAnswers() {
+  if (!pendingResult) return;
+  const answers = pendingResult.attendingQuestions.map((q, i) => ({
+    question: q.q,
+    userAnswer: (document.getElementById(`aq-answer-${i}`)?.value || '').trim(),
+    model: q.model,
+  }));
+  displayResults(pendingResult, answers);
+  pendingResult = null;
+}
+
+/* ── DISPLAY RESULTS ─────────────────────────────────────────── */
+function displayResults(r, qna) {
+  // Grade header
+  const gradeClass = `grade-${r.grade}`;
+  document.getElementById('results-header').innerHTML = `
+    <div class="grade-circle ${gradeClass}">
+      <div class="grade-letter">${r.grade}</div>
+      <div class="grade-pct">${r.total}/100</div>
+    </div>
+    <div class="grade-meta">
+      <h3>${gradeLabel(r.grade)}</h3>
+      <div class="grade-summary">${r.grade_summary}</div>
+    </div>
+  `;
+
+  // Score bars
+  const categories = [
+    { key: 'oneliner',   label: 'One-Liner',       max: 10,  color: '#60a5fa' },
+    { key: 'hpi',        label: 'HPI',             max: 15,  color: '#a78bfa' },
+    { key: 'history',    label: 'Pertinent Hx',    max: 10,  color: '#34d399' },
+    { key: 'exam',       label: 'Physical Exam',   max: 13,  color: '#fbbf24' },
+    { key: 'workup',     label: 'Workup',          max: 12,  color: '#f87171' },
+    { key: 'diagnosis',  label: 'Most Likely Dx',  max: 10,  color: '#fb923c' },
+    { key: 'cantmiss',   label: "Can't-Miss DDx",  max: 10,  color: '#f472b6' },
+    { key: 'plan',       label: 'Plan & Dispo',    max: 10,  color: '#22d3ee' },
+    { key: 'flow',       label: 'Flow & Order',    max: 10,  color: '#818cf8' },
+  ];
+
+  document.getElementById('score-bars').innerHTML = categories.map(cat => {
+    const score = r.scores[cat.key] ?? 0;
+    const pct = Math.round((score / cat.max) * 100);
+    return `
+      <div class="score-bar-row">
+        <div class="score-bar-label">${cat.label}</div>
+        <div class="score-bar-track">
+          <div class="score-bar-fill" style="width:${pct}%; background:${cat.color};"></div>
+        </div>
+        <div class="score-bar-val" style="color:${cat.color}">${score}/${cat.max}</div>
+      </div>`;
+  }).join('');
+
+  // Strengths
+  if (r.strengths?.length) {
+    document.getElementById('strengths-card').style.display = 'block';
+    document.getElementById('strengths-list').innerHTML = r.strengths.map(s =>
+      `<div class="fc-item"><div class="fc-dot green"></div><div class="fc-text">${s}</div></div>`
+    ).join('');
+  }
+
+  // Improvements
+  if (r.improvements?.length) {
+    document.getElementById('improvements-card').style.display = 'block';
+    document.getElementById('improvements-list').innerHTML = r.improvements.map(s =>
+      `<div class="fc-item"><div class="fc-dot amber"></div><div class="fc-text">${s}</div></div>`
+    ).join('');
+  }
+
+  // Critical misses
+  if (r.critical_misses?.length) {
+    document.getElementById('critical-card').style.display = 'block';
+    document.getElementById('critical-list').innerHTML = r.critical_misses.map(s =>
+      `<div class="fc-item"><div class="fc-dot red"></div><div class="fc-text">${s}</div></div>`
+    ).join('');
+  } else {
+    document.getElementById('critical-card').style.display = 'none';
+  }
+
+  // Coaching tip
+  if (r.coaching_tip) {
+    document.getElementById('coaching-card').style.display = 'block';
+    document.getElementById('coaching-text').textContent = r.coaching_tip;
+  }
+
+  // Attending Q&A
+  const aqSection = document.getElementById('aq-results-section');
+  if (qna && qna.length) {
+    aqSection.style.display = 'block';
+    aqSection.innerHTML = `
+      <div class="aq-result-section-title">🩺 Attending Q&A</div>
+      ${qna.map(item => `
+        <div class="aq-result-card">
+          <div class="aq-result-q">${item.question}</div>
+          <div class="aq-result-block aq-result-your">
+            <div class="aq-result-label">Your Answer</div>
+            <div class="aq-result-text">${item.userAnswer || '<em style="opacity:0.5">No answer provided</em>'}</div>
+          </div>
+          <div class="aq-result-block aq-result-model">
+            <div class="aq-result-label">Model Answer</div>
+            <div class="aq-result-text">${item.model}</div>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  } else {
+    aqSection.style.display = 'none';
+  }
+
+  // Model answer
+  document.getElementById('model-answer-body').textContent = r.model_presentation || '';
+  document.getElementById('model-answer-body').classList.remove('visible');
+  document.getElementById('model-toggle-icon').textContent = '▼';
+  modelAnswerVisible = false;
+
+  showWorkspace('results');
+}
+
+function gradeLabel(g) {
+  return { A: 'Excellent Presentation', B: 'Good Presentation', C: 'Needs Improvement', D: 'Significant Gaps', F: 'Major Revision Required' }[g] || '';
+}
+
+/* ── CONTROLS ─────────────────────────────────────────────────── */
+function toggleModel() {
+  modelAnswerVisible = !modelAnswerVisible;
+  document.getElementById('model-answer-body').classList.toggle('visible', modelAnswerVisible);
+  document.getElementById('model-toggle-icon').textContent = modelAnswerVisible ? '▲' : '▼';
+}
+
+function tryAgain() {
+  pendingResult = null;
+  showWorkspace('input');
+}
+
+function clearPresentation() {
+  if (isRecording) stopDictation();
+  baseTranscript = '';
+  document.getElementById('presentation-input').value = '';
+  setMicStatus('', false);
+  updateWordCount();
+}
+
+/* ── VOICE DICTATION ─────────────────────────────────────────── */
+let recognition = null;
+let isRecording = false;
+let baseTranscript = ''; // text already confirmed before current session
+
+function normalizeDictation(text) {
+  return text
+    // Structural breaks
+    .replace(/\bnew paragraph\b\s*/gi, '\n\n')
+    .replace(/\bnew line\b\s*/gi, '\n')
+    // Punctuation — strip surrounding spaces, then add correct trailing space
+    .replace(/\s*\bperiod\b\s*/gi,            '. ')
+    .replace(/\s*\bcomma\b\s*/gi,             ', ')
+    .replace(/\s*\bquestion mark\b\s*/gi,     '? ')
+    .replace(/\s*\bexclamation (?:point|mark)\b\s*/gi, '! ')
+    .replace(/\s*\bcolon\b\s*/gi,             ': ')
+    .replace(/\s*\bsemicolon\b\s*/gi,         '; ')
+    .replace(/\s*\bem dash\b\s*/gi,           ' — ')
+    .replace(/\s*\bdash\b\s*/gi,              ' — ')
+    .replace(/\s*\bhyphen\b\s*/gi,            '-')
+    .replace(/\bopen (?:paren|parenthesis)\b\s*/gi,  '(')
+    .replace(/\s*\bclose (?:paren|parenthesis)\b\s*/gi, ')')
+    .replace(/\bslash\b/gi,                   '/')
+    // Tidy up
+    .replace(/  +/g, ' ')
+    .replace(/ \n/g, '\n');
+}
+
+function initSpeech() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return null;
+
+  const r = new SpeechRecognition();
+  r.continuous = true;
+  r.interimResults = true;
+  r.lang = 'en-US';
+
+  r.onresult = (e) => {
+    let interim = '';
+    let newFinal = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) newFinal += t;
+      else interim += t;
+    }
+    if (newFinal) baseTranscript += normalizeDictation(newFinal);
+    document.getElementById('presentation-input').value = baseTranscript + interim;
+    updateWordCount();
+  };
+
+  r.onerror = (e) => {
+    if (e.error === 'not-allowed') {
+      setMicStatus('Microphone access denied. Allow mic in browser settings.', true);
+    } else if (e.error !== 'no-speech') {
+      setMicStatus('Error: ' + e.error, true);
+    }
+    stopDictation();
+  };
+
+  r.onend = () => {
+    // Auto-restart if still meant to be recording (handles browser timeout)
+    if (isRecording) r.start();
+  };
+
+  return r;
+}
+
+function toggleDictation() {
+  if (isRecording) {
+    stopDictation();
+  } else {
+    startDictation();
+  }
+}
+
+function startDictation() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    setMicStatus('Voice dictation requires Chrome or Edge.', true);
+    return;
+  }
+
+  baseTranscript = document.getElementById('presentation-input').value;
+  recognition = initSpeech();
+  recognition.start();
+  isRecording = true;
+
+  const btn = document.getElementById('mic-btn');
+  btn.classList.add('recording');
+  document.getElementById('mic-label').textContent = 'Stop';
+  setMicStatus('Listening… say "period", "comma", "new line", etc. for punctuation.', false);
+}
+
+function stopDictation() {
+  if (recognition) { recognition.onend = null; recognition.stop(); recognition = null; }
+  isRecording = false;
+
+  const btn = document.getElementById('mic-btn');
+  btn.classList.remove('recording');
+  document.getElementById('mic-label').textContent = 'Dictate';
+  setMicStatus('Dictation stopped. Review your text, then score.', false);
+}
+
+function setMicStatus(msg, isError) {
+  const el = document.getElementById('mic-status');
+  el.textContent = msg;
+  el.className = 'mic-status' + (isError ? ' active' : '');
+}
+
+function randomCase() {
+  const id = CASES[Math.floor(Math.random() * CASES.length)].id;
+  selectCase(id);
+}
+
+function goBack() {
+  if (isRecording) stopDictation();
+  currentCase = null;
+  pendingResult = null;
+  document.getElementById('case-select-view').classList.remove('hidden');
+  document.getElementById('case-detail-view').classList.remove('visible');
+  document.querySelector('.main').classList.add('select-mode');
+  showWorkspace('input');
+  document.getElementById('presentation-input').value = '';
+  updateWordCount();
+}
+</script>
+<div class="alpha-badge" title="These trainers are in alpha testing — content and scoring are still being refined.">🧪 Alpha · In Testing</div>
+</body>
+</html>
